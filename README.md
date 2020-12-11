@@ -1,5 +1,6 @@
 # eICU featurization
 Collection of functions to automate feature extraction
+Everything to be updated by mid December 2020
 
 <ol>
   <li>extract_patient - extracts features from patient and hosptial table for patients of interest - last updated: 12-11-2020</li>
@@ -13,5 +14,4 @@ Collection of functions to automate feature extraction
   <li>extract_PTS_information_theory - coming soon</li>
   <li>extract_respiratory - coming soon</li>
   <li>extract_sofa - Jason - coming soon</li>
-
 </ol>
