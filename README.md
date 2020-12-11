@@ -1,2 +1,2 @@
 # eICU_featurization
-Collection of functions in R to automate feature extraction
+Collection of functions to automate feature extraction
