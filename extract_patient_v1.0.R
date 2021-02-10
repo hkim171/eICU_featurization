@@ -6,12 +6,13 @@
 #-------------------------------------------------------------------------------------------------------------------------------------#
 
 #### input parameters: ####
-#patientunitstayid_list:    int/num list - A R list of patientunitstayids as numerics
-#patient_table:             data.table/data.frame - RAW eICU patient table
-#hospital_table:            data.table/data.frame - RAW eICU hospital table
-#apachedx_dictionary_path:  STR - Path to an excel file required to get apachedx information.
-#make_binary:               Boolean - if set to TRUE will make categorical variables into one-hot-encoded (dummy) binary categories. 
-#label_boolean:             Boolean - if set to TRUE, only extracts features relavant as modeling end points
+# patientunitstayid_list:    int/num list - A R list of patientunitstayids as numerics
+# patient_table:             data.table/data.frame - RAW eICU patient table
+# hospital_table:            data.table/data.frame - RAW eICU hospital table
+# apachedx_dictionary_path:  STR - Path to an excel file required to get apachedx information.
+# make_binary:               Boolean - if set to TRUE will make categorical variables into one-hot-encoded (dummy) binary categories. 
+# label_boolean:             Boolean - if set to TRUE, only extracts features relavant as modeling end points
+# function_dir:              location of where this script and the required_custom_function.R is located. 
 #
 # *note: tables are loaded in prior to input into function. Not a real issue with patient function
 #        but other larger tables require this so tables are not repeated called when function it called
@@ -20,9 +21,9 @@
 #-------------------------------------------------------------------------------------------------------------------------------------#
 
 #### files required: ####
-#patient table
-#hospital table
-#ApacheDX_dict.xlsx - used for categorizing apache admission dx - this file is still incomplete as there are more input required from clinicians. 
+# patient table
+# hospital table
+# ApacheDX_dict.xlsx - used for categorizing apache admission dx - this file is still incomplete as there are more input required from clinicians. 
 #   Current iteration version is looked at by Dr. Nadar Faraday - July 2020
 #   Sending to Dr. Robert Stevens DEC 2020 to finalize and get consensus. 
 #-------------------------------------------------------------------------------------------------------------------------------------#
@@ -42,29 +43,36 @@
 #-------------------------------------------------------------------------------------------------------------------------------------#
 
 #### Code example is provide below. select lines 46-58 then click ctrl+shift+c to uncomment. ####
-
+# library(data.table)
 # dir <- "/storage/eICU/" #data_dir
 # 
-# # source <- source("/storage/eICU/eICU_feature_extract/extract_patient_v2.R") #this is an example. you dont want to source the file you are
+# # source <- source("/storage/eICU/eICU_feature_extract/extract_patient_v1.0.R") #this is an example. you dont want to source the file you are
 # #running an example in - do not uncomment.
 # 
 # patient <- fread(paste0(dir, "/patient.csv"))
 # pids <- patient$patientunitstayid
 # hospital <- fread(paste0(dir, "/hospital.csv"))
 # dictionary_path = "/storage/eICU/eICU_feature_extract/ApacheDX_dict.xlsx"
+# function_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/"
 # 
-# patient_labels <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, make_binary = T, label_boolean = T)
+# patient_labels <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, make_binary = T, label_boolean = T, function_dir = function_dir)
 # 
-# patient_features <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, make_binary = T, label_boolean = F)
+# patient_features <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, make_binary = T, label_boolean = F, function_dir = function_dir)
 
 
 ####Function
 
-extract_patient <- function(patientunitstayid_list, patient_table, hospital_table, apachedx_dictionary_path, make_binary, label_boolean) {
+extract_patient <- function(patientunitstayid_list, patient_table, hospital_table, apachedx_dictionary_path, make_binary, label_boolean, function_dir) {
   require(tidyverse)
   require(plotly)
   require(chron)
   require(openxlsx)
+  
+  if (missing(function_dir)) {
+    stop("missing path to required_custom_functions.R")
+  }
+  
+  source(paste0(function_dir, "/required_custom_functions.R"))
   
   if (missing(make_binary)) {
     make_binary <- FALSE
@@ -79,6 +87,8 @@ extract_patient <- function(patientunitstayid_list, patient_table, hospital_tabl
   } else if (missing(apachedx_dictionary_path)) {
     stop("missing path to apachedx_dictionary_excel_file")
   }
+  
+  
   
   
   #Will preprocess age to filter by age under 18. 
@@ -140,30 +150,10 @@ extract_patient <- function(patientunitstayid_list, patient_table, hospital_tabl
     Dx_combined <- Dx_combined[, -1]
     
     #make apache dx binary
-    
-    #gives column name of features that are characters
-    which_character <- function(df) {
-      df <- as.data.frame(df, stringasfactor = F)
-      charvars <- c()
-      varnames <- colnames(df)
-      for (vars in varnames) {
-        if (is.character(df[,which(names(df) == vars)]) == TRUE) {
-          # print("true")
-          charvars <- c(charvars, vars)
-        }
-      }
-      return(charvars)
-    }
-    
-    binaryvarnames <- which_character(Dx_combined)
-    Dx_combined <- as.data.frame(Dx_combined)
-    patient_binary <- Dx_combined[, which(colnames(Dx_combined) %in% c("patientunitstayid", binaryvarnames))]
-    
-    dummies <- fastDummies::dummy_cols(patient_binary, select_columns = c(binaryvarnames), remove_selected_columns = T, ignore_na = T)
-    # dummies[is.na(dummies)] <- 0
 
-    Dx_combined <- Dx_combined %>% dplyr::select(-System)
-    Dx_combined <- merge(Dx_combined, dummies, by = "patientunitstayid")
+    #requires which_character function - 
+    #requires create_binary function - 
+    Dx_combined <- create_binary(as.data.frame(Dx_combined))
     
     patient_table <- merge(patient_table, Dx_combined, by = "patientunitstayid", all = T)
     patient_table <- patient_table %>% dplyr::select(-apacheadmissiondx)
@@ -274,14 +264,7 @@ extract_patient <- function(patientunitstayid_list, patient_table, hospital_tabl
     
     #binarize
     if (make_binary) {
-      binaryvarnames <- which_character(patient_table)
-      patient_table <- as.data.frame(patient_table)
-      patient_binary <- patient_table[, which(colnames(patient_table) %in% c("patientunitstayid", binaryvarnames))]
-      
-      dummies <- fastDummies::dummy_cols(patient_binary, select_columns = c(binaryvarnames), remove_selected_columns = T, ignore_na = T)
-      
-      patient_table <- patient_table %>% dplyr::select(-all_of(binaryvarnames))
-      patient_table <- merge(patient_table, dummies, by = "patientunitstayid", all = T)
+      patient_table <- create_binary(as.data.frame(patient_table))
     }
     
     return(patient_table)
@@ -316,14 +299,7 @@ extract_patient <- function(patientunitstayid_list, patient_table, hospital_tabl
     
     #binarize
     if (make_binary) {
-      binaryvarnames <- which_character(patient_table)
-      patient_table <- as.data.frame(patient_table)
-      patient_binary <- patient_table[, which(colnames(patient_table) %in% c("patientunitstayid", binaryvarnames))]
-      
-      dummies <- fastDummies::dummy_cols(patient_binary, select_columns = c(binaryvarnames), remove_selected_columns = T, ignore_na = T)
-      
-      patient_table <- patient_table %>% dplyr::select(-all_of(binaryvarnames))
-      patient_table <- merge(patient_table, dummies, by = "patientunitstayid", all = T)
+      patient_table <- create_binary(as.data.frame(patient_table))
     }
     
     return(patient_table)
