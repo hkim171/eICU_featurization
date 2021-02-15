@@ -28,6 +28,8 @@ library(MLmetrics)
 library(Metrics)
 library(EvaluationMeasures)
 library(Rmisc)
+library(xgboost)
+library(glmnet)
 
 ############################# CHANGE PARAMETERS TO SUIT NEEDS ####################################################
 #loads functions that may or may not be used. 

@@ -1,32 +1,32 @@
 # extract all features from LAB table 1
 
-# #example
+#example
 # patient <- fread("~/RO1_2020/ICP/propofol/ICP_meta_table.csv")
 # patient <- patient %>% dplyr::select(patientunitstayid, drug_offset)
 # colnames(patient)[2] <- "offset" #diagosis offset
 # 
-# #we want to only extract data from before the offset for each patient. 
+# #we want to only extract data from before the offset for each patient.
 # 
 # patient <- patient %>% group_by(patientunitstayid) %>% slice(which.min(offset))
 # 
 # pids <- patient$patientunitstayid
 # 
 # lab_df <- fread("/storage/eICU/lab.csv")
+# lab_df <- lab_df[which(lab_df$patientunitstayid %in% unique(pids)), ]
 # 
 # lab_final <- rbind()
 # for (i in 1:length(pids)) {
 #   print(paste0("--------------", i, "--------------"))
-#   
+# 
 #   tempid <- pids[i]
 #   temp_row <- patient[patient$patientunitstayid == tempid, ]
-#   upper_hr <- temp_row$offset / 60 
+#   upper_hr <- temp_row$offset / 60
 #   lower_hr <- upper_hr - 6
-#   
+# 
 #   temp_lab <- extract_lab(patientunitstayids = tempid, table_df = lab_df, lower_hr = lower_hr, upper_hr = upper_hr, per_pid_boolean = T, pre_stats = T, extras = T)
-#   
+# 
 #   lab_final <- rbind.fill(lab_final, temp_lab)
 # }
-
 
 
 extract_lab <- function(patientunitstayids, table_df, lower_hr, upper_hr, per_pid_boolean, pre_stats, extras) {
