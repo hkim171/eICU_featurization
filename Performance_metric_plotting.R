@@ -166,7 +166,7 @@ calibrated_test_probs$type <- "calibrated"
 
 test_probs <- rbind.fill(uncalibrated_test_probs, calibrated_test_probs)
 balance <- as.data.frame(test_class_balance)
-balance <- balance[which(balance$type == "eICU"), ] %>% group_by(file) %>% slice(which.min(outer_fold))
+balance <- balance[which(balance$type == "eICU"), ] %>% group_by(file) %>% dplyr::slice(which.min(outer_fold))
 balance$class_0 <- as.numeric(as.character(balance$class_0))
 balance$class_1 <- as.numeric(as.character(balance$class_1))
 balance$class_0_prop <- trunc(((balance$class_0) / (balance$class_0 + balance$class_1))*10^2)/10^2

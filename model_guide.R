@@ -1,67 +1,198 @@
-#Guide Code for Supervised learning Models
-#Author Han - updated - 2/15/2021
+### Supervised Classificition Machine Learning Prototyping Auto-Pipeline
+###
+### Usage: For Prototyping of ML modelsand to serve as guide code for increased functionality
+### Trains glmnet, xgboost, and random forest models
 
-#trains glmnet, xgboost, and random forest and provides outputs of trained models and test/train subsets as csv files. 
+#Author Han 
+#updated
+#V0.0 - 2/15/2021 - organized to be modular
+#V0.1 - 2/16/2021 - organized to be a function to be run. 
+#V0.2 - 2/17/2021 - MARCC tested? not yet
+
+#### Output
+#Creates directory with saved models, performance metrics, and plots of:
+# 1. Receiver operating characteristic curve (ROC)
+# 2. Precision Recall Curve (PRC)
+# 3. Isotonic regression calibrated vs uncalibrated plots
+# 4. Individual of 1-3 and plots including blox plots of metrics themselves. 
+# 5. CSV summary of all model metrics for all three algorithms with 95% Confidence Intervals. 
+
+#### Input parameters & required files: ####
+
+## Directory inputs (code will double check whether these directories exist and files within it are available)
 #
-#input args
-#1. experiment_name : identifier for test you are running
-#2. num_outer_loops : number of different test and train splits to generalize results
-#3. cross_validation_k : number of k-fold xval you want to do (for basic hyperparameter tuning)
-#4. cross_validation_repeats : how many random sampling of cross validation we want to perform (just makes things a little more generalizable at the cost of more computation)
-#5. random_seed : set it different for different re-sampling
-#6.main_dir : main directory for folders to be created in
-#7. feature_dir and label_dir : full path of the feature space and label space
-#     feature_dir and label_dir should have same identifier to be merged
-#     label_dir should only have the identifier and a character/factor label column. 
-#     For both, make sure first column is the merge identifier. 
-#8. merge identifier : column name to be merged with. Code renames to make sure it is the same but requires
-#     The first column to be the identifiers. 
-#9. bad_outcome, good_outcome : names of the two classes (what you are predicting for should be assigned to bad_outcome (class_1))
+#code_dir:                  Main github pull directory - ensures all required scripts are in 
+#                           one place - "./eICU_featureization/" 
+#                           
+#save_dir:                  Location where script will create a new folder titled experiement_name
+#                           and save all model related files to. - ideally, if you are a contributer to the github,
+#                           do not make pull directory your save_dir (unless you want to make exception to git push)
+#
+## File Related Inputs: 
+#
+#merge_identifier:          The identifier/key column feature space and label space can merge on. Please refer to 
+#                           the example file with "patientunitstayid" as the merge identifier. 
+#
+#feature_dir:               Directory and name of the CSV feature space. Must include merge identifier as a column (ideally
+#                           the first column)
+#
+#label_dir:                 Directory and name of the CSV label space. Must include merge identifier as the first column. 
+#
+#outcomes:                  A c() character list of the class_1 (what the model should predict for) and class_0. 
+#                           (ie) outcomes = c("dead", "alive") [c(class_1, class_0)] (ordering matters)
+#                           ^ all metrics will be in relation to predicting for the "dead" (class_1) prediction task. [REQUIRED]
+#
+## Model Parameter Inputs (most parameter inputs can be left blank)
+#
+#experiment_name:           name the experiment (creates a new directory in save_dir with the experiment_name) [REQUIRED]
+#                           Please select a unique intuitive name or files and folders will be overwritten 
+#
+#num_outer_loop:            specifies how many resamplings of the training and testing set to perform [DEFAULT = 1]
+#
+#cross_validation_k:        specifies how many k-fold cross validation to perform [DEFAULT = 10]. 
+#
+#cross_validation_repeats:  specifies how many fold resamplings to repeat [DEFAULT = 1]
+#
+#random_seed:               pick a random seed for repoducibility [DEFAULT = 1206]
+#
+#
+## Extra_parameters
+#
+#Already_trained:           [TRUE/FALSE] Sometimes, you just want to plot again or re-run existing files. Set as true
+#                           and ensure the save_dir and experiment_name point to the correct folder with .RData trained
+#                           models to replot and resave CSVs. 
+
+#Example Code (copy and paste this into a new script and source in the files in github directory)
+
+build_prototype(code_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/", 
+                save_dir = "/storage/eICU/eICU_feature_extract/",
+                
+                merge_identifier = "patientunitstayid",
+                feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space.csv",
+                label_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_label.csv",
+                outcomes = c("Expired", "Alive"),
+                experiment_name = "test"
+                )
 
 
-library(tidyverse)
-library(randomForestSRC)
-library(ranger)
-library(randomForest)
-library(caret)
-library(MLmetrics)
-library(Metrics)
-library(EvaluationMeasures)
-library(Rmisc)
-library(xgboost)
-library(glmnet)
+#function below - do not alter - if so, submit an issue and make a fork/branch to work on the corrections
 
-############################# CHANGE PARAMETERS TO SUIT NEEDS ####################################################
-#loads functions that may or may not be used. 
+build_prototype <- function(code_dir, 
+                            save_dir, 
+                            
+                            merge_identifier,
+                            feature_dir,
+                            label_dir,
+                            outcomes,
+                            
+                            experiment_name, 
+                            num_outer_loop,
+                            cross_validation_k,
+                            cross_validation_repeats,
+                            random_seed,
+                            Already_trained
+                            ) {
+  
+  #directory checks
+  if (!dir.exists(code_dir)) {
+    stop("the CODE directory is not valid and/or does not exist. please double check")
+  }
+  
+  if (!dir.exists(save_dir)) {
+    stop("the SAVE directory is not valid and/or does not exist. please double check")
+  }
+  
+  #check of required source scripts in directory
+  if (dir.exists(code_dir)) {
+    setwd(code_dir)
+    if (!file.exists("required_custom_functions.R")) {
+      stop("required_custom_functions.R is not within the code dir. Make sure code_dir is correct.\n
+            If correct, do not rename or move code out of the code_dir and ensure required_custom_functions.R\n
+            is in the directory")
+    } else {
+      source("required_custom_functions.R")
+    }
+    
+    if (!file.exists("Performance_metric_plotting.R")) {
+      stop("Performance_metric_plotting.R is not within the code dir. Make sure code_dir is correct.\n
+            If correct, do not rename or move code out of the code_dir and ensure required_custom_functions.R\n
+            is in the directory") 
+    } else {
+      source("Performance_metric_plotting.R")
+    }
+  }
+  
+  #experiment name checks
+  if (missing(experiment_name)) {
+    stop("Experiment name required - pick a unique name. files will be overwitten if otherwise.")
+  }
+  
+  if (!is.character(experiment_name)) {
+    experiment_name <- as.character(experiment_name)
+    message("Experiment name was not entered as a character so was converted into a character.\nIf this was unintentional, double check")
+  }
+  
+  #file related checks
+  if (missing(merge_identifier)) {
+    stop("Merge Identifier required - a key or common column between feature space and label space for merge purposes.")
+  }
+  
+  if (!is.character(merge_identifier)) {
+    message("Make sure the merge identifier is assinged as a character")
+  }
+  
+  if (!file.exists(feature_dir)) {
+    stop("feature space file is not within the feature_dir. Make sure feature_dir. is correct.") 
+  }
+  
+  if (!file.exists("Performance_metric_plotting.R")) {
+    stop("label space file is not within the label_dir. Make sure label_dir. is correct.") 
+  }
+  
+  
+  #parameter checks
+  if (missing(num_outer_loop)) {
+    num_outer_loop <- 2
+  }
+  
+  if (missing(cross_validation_k)) {
+    cross_validation_k <- 10
+  }
+  
+  if (missing(cross_validation_repeats)) {
+    cross_validation_repeats <- 1
+  }
+  
+  if (missing(random_seed)) {
+    random_seed <- 1206
+  }
+  
+  if (missing(Already_trained)) {
+    Already_trained <- FALSE
+  }
+  
 
-#source of plotting code
-source("/storage/eICU/eICU_feature_extract/eICU_featurization/Performance_metric_plotting.R")
+package_list <- c("tidyverse", "data.table", "ranger", "randomForest", "caret", "MLmetrics", "Metrics", 
+                  "EvaluationMeasures", "Rmisc", "xgboost", "glmnet")
+load_packages(package_list)
 
-experiment_name <- "test"
-num_outer_loops <- 10
-cross_validation_k <- 5
-cross_validation_repeats <- 1
-random_seed <- 1206
+
 
 #save_dir
-main_dir <- "/storage/eICU/eICU_feature_extract/eICU_featurization/test_dir/" #existing DIR where you want folder for test to be created. 
-dir <- paste0(main_dir, "/", experiment_name)
+dir <- paste0(save_dir, "/", experiment_name)
 dir.create(dir)
 setwd(dir)
-
-#feature and label dir + name
-feature_dir <- "/storage/eICU/eICU_feature_extract/eICU_featurization/test_dir/test_feature_space.csv"
-label_dir <- "/storage/eICU/eICU_feature_extract/eICU_featurization/test_dir/test_label.csv"
-
-merge_identifier <- "patientunitstayid"
-
 
 table(read.csv(label_dir)$label) #used to identify what to label each outcome. Model always predicts for class_1. 
 
 #outcome_names
-bad_outcome <- "Expired" #class_1 - normally want to test for the unfavorable/unwanted outcome. 
+bad_outcome <- outcomes[[1]] #class_1 - normally want to test for the unfavorable/unwanted outcome. 
 #Class 1 is what you are predicting for. 
-good_outcome <- "Alive"  #class_0
+good_outcome <- outcomes[[2]]  #class_0
+
+print(bad_outcome)
+print(good_outcome)
+
 
 
 ############################# DO NOT CHANGE BELOW UNLESS IT BREAKS ####################################################
@@ -86,7 +217,7 @@ test_class_balance <- rbind()
 
 
 set.seed(random_seed)
-for(j in 1:num_outer_loops) { 
+for(j in 1:num_outer_loop) { 
   print(paste0("Outer--",j))
   
   #load in feature as full_feature_space and label
@@ -121,10 +252,18 @@ for(j in 1:num_outer_loops) {
   intrain <- createDataPartition(y = df$label, p = 0.80, list = FALSE)
   
   #writes training space and testing space as csvs for future reproducible work if needed. 
+  
+  if (!Already_trained) {
+  
   training <- df[intrain,]
-  write.csv(training, paste0(dir, "/training_", j, ".csv"))
+  write.csv(training, paste0(dir, "/training_", j, ".csv"), row.names = F)
   testing <- df[-intrain,]
-  write.csv(testing, paste0(dir, "/testing_", j, ".csv"))
+  write.csv(testing, paste0(dir, "/testing_", j, ".csv"), row.names = F)
+  
+  } else {
+    training <- fread(paste0(dir, "/training_", j, ".csv"))
+    testing <- fread(paste0(dir, "/training_", j, ".csv"))
+  }
   
   identifier <- experiment_name
   
@@ -444,3 +583,5 @@ write.csv(calibrated_test_probs_c1, "calibrated_test_probs_c1.csv", row.names = 
 write.csv(test_class_balance, "test_class_balance.csv", row.names = F)
 
 performance_metric_plotting(experiment_name = experiment_name, saved_file_location = dir)
+
+}
