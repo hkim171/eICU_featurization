@@ -233,7 +233,7 @@ for(j in 1:num_outer_loop) {
   label$label[which(label$label == bad_outcome)] <-  "class_1"
   label$label <- as.factor(label$label)
   
-  label <- label %>% dplyr::select(tidyselect::all_of(merge_identifier), label)
+  label <- label %>% dplyr::select(merge_identifier, label)
   
   #combine with label. ** label is assumed to be a factor with column header "label"
   full_feature_space <- merge(label, full_feature_space, by = merge_identifier)
