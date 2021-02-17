@@ -1,59 +1,12 @@
 #All in one Plotting 
 
-#replaces infinites in a dataframe with replace_with
-replace_infinite <- function(df, replace_with) {
-  df <- do.call(data.frame,lapply(df, function(x) replace(x, is.infinite(x),replace_with)))
-  return(df)
-}
-
-#replaces NAN in a dataframe with replace_with
-replace_nan <- function(df, replace_with) {
-  df <- do.call(data.frame,lapply(df, function(x) replace(x, is.nan(x),replace_with)))
-  return(df)
-}
-
-#replaces NAs in a dataframe with replace_with
-replace_NA <- function(df, replace_with) { 
-  df[is.na(df)] = replace_with
-  return(df)
-}
-
-#Counts number of NAs in a dataframe
-check_na <- function(df) {
-  table(is.na(df))
-}
-
-#counts number of Inf and -Inf in a dataframe
-check_infinite <- function(df){
-  yes <- 0
-  no <- 0
-  for (i in 1:ncol(df)) {
-    tempyes <- sum(is.infinite(df[,i]))
-    yes <- yes + tempyes
-    no <- no + (length(df[,1]) - yes)
-  }
-  df <- data.frame(no, yes, row.names = "")
-  colnames("FALSE", "TRUE")
-  print(as.data.frame(df))
-}
-
-
 performance_metric_plotting <- function(experiment_name, saved_file_location) {
 
-library(tidyverse)
-library(randomForestSRC)
-library(ranger)
-library(randomForest)
-library(caret)
-library(MLmetrics)
-library(Metrics)
-library(EvaluationMeasures)
-library(Rmisc)
-library(data.table)
-library(caretEnsemble)
-
-# source("~/useful_functions.R")
-
+package_list <- c("tidyverse", "randomForestSRC", "ranger", "randomForest", "caret", "MLmetrics", "Metrics", 
+                  "EvaluationMeasures", "Rmisc", "data.table", "caretEnsemble")
+load_packages(package_list)
+  
+  
 validation_results <- rbind()#done
 validation_ROC <- rbind()#done
 validation_PR <- rbind()#done

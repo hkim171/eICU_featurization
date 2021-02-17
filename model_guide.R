@@ -64,15 +64,15 @@
 
 #Example Code (copy and paste this into a new script and source in the files in github directory)
 
-build_prototype(code_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/", 
-                save_dir = "/storage/eICU/eICU_feature_extract/",
-                
-                merge_identifier = "patientunitstayid",
-                feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space.csv",
-                label_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_label.csv",
-                outcomes = c("Expired", "Alive"),
-                experiment_name = "test"
-                )
+# build_prototype(code_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/", 
+#                 save_dir = "/storage/eICU/eICU_feature_extract/",
+#                 
+#                 merge_identifier = "patientunitstayid",
+#                 feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space.csv",
+#                 label_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_label.csv",
+#                 outcomes = c("Expired", "Alive"),
+#                 experiment_name = "test"
+#                 )
 
 
 #function below - do not alter - if so, submit an issue and make a fork/branch to work on the corrections
@@ -262,7 +262,12 @@ for(j in 1:num_outer_loop) {
   
   } else {
     training <- fread(paste0(dir, "/training_", j, ".csv"))
-    testing <- fread(paste0(dir, "/training_", j, ".csv"))
+    
+    training$label <- as.factor(training$label)
+    
+    testing <- fread(paste0(dir, "/testing_", j, ".csv"))
+    
+    testing$label <- as.factor(testing$label)
   }
   
   identifier <- experiment_name
@@ -287,27 +292,30 @@ for(j in 1:num_outer_loop) {
                          savePredictions = T,
                          allowParallel = T)
 
-  modelxgboost <- caret::train(label~., data = training, method="xgbTree", metric = 'ROC',trControl=control,
-                               weights = model_weights)
-  print(paste0(identifier, "-", j, "-xg done"))
-  save(modelxgboost,  file = paste(identifier,'_modelXG_iter_',j, '.Rdata', sep = ''))
+  if (!Already_trained) {
   
+    modelxgboost <- caret::train(label~., data = training, method="xgbTree", metric = 'ROC',trControl=control,
+                                 weights = model_weights)
+    print(paste0(identifier, "-", j, "-xg done"))
+    save(modelxgboost,  file = paste(identifier,'_modelXG_iter_',j, '.Rdata', sep = ''))
+    
+    
+    modelrf <- caret::train(label~., data = training, method="ranger", metric = 'ROC',trControl=control,
+                            weights = model_weights)
+    print(paste0(identifier, "-", j, "-rf done"))
+    save(modelrf,  file = paste(identifier, '_modelRF_iter_',j, '.Rdata', sep = ''))
+    
+    modelglm <- caret::train(label~., data = training, method="glmnet", metric = 'ROC',trControl=control,
+                             weights = model_weights)
+    print(paste0(identifier, "-", j, "-glmnet done"))
+    save(modelglm,  file = paste(identifier, '_modelGLM_iter_',j, '.Rdata', sep = ''))
+  } else {
+    print(paste0("loading trained models for outer loop: ", j) )
+    load(file = paste(identifier, '_modelXG_iter_',j, '.Rdata', sep = ''))
+    load(file = paste(identifier, '_modelRF_iter_',j, '.Rdata', sep = ''))
+    load(file = paste(identifier, '_modelGLM_iter_',j, '.Rdata', sep = ''))
   
-  modelrf <- caret::train(label~., data = training, method="ranger", metric = 'ROC',trControl=control,
-                          weights = model_weights)
-  print(paste0(identifier, "-", j, "-rf done"))
-  save(modelrf,  file = paste(identifier, '_modelRF_iter_',j, '.Rdata', sep = ''))
-  
-  modelglm <- caret::train(label~., data = training, method="glmnet", metric = 'ROC',trControl=control,
-                           weights = model_weights)
-  print(paste0(identifier, "-", j, "-glmnet done"))
-  save(modelglm,  file = paste(identifier, '_modelGLM_iter_',j, '.Rdata', sep = ''))
-  
-  # load(file = paste('_modelXG_iter_',j, '.Rdata', sep = ''))
-  # load(file = paste('_modelRF_iter_',j, '.Rdata', sep = ''))
-  # load(file = paste('_modelGLM_iter_',j, '.Rdata', sep = ''))
-  
-  # }
+  }
   
   
   #####compile validation results. #####
