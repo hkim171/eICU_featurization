@@ -152,11 +152,11 @@ build_prototype <- function(code_dir,
   
   #parameter checks
   if (missing(num_outer_loop)) {
-    num_outer_loop <- 2
+    num_outer_loop <- 1
   }
   
   if (missing(cross_validation_k)) {
-    cross_validation_k <- 10
+    cross_validation_k <- 2
   }
   
   if (missing(cross_validation_repeats)) {
