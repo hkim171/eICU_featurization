@@ -7,7 +7,7 @@
 #updated
 #V0.0 - 2/15/2021 - organized to be modular
 #V0.1 - 2/16/2021 - organized to be a function to be run. 
-#V0.2 - 2/17/2021 - MARCC tested? not yet
+#V0.2 - 2/17/2021 - MARCC tested and code organized further. 
 
 #### Output
 #Creates directory with saved models, performance metrics, and plots of:
@@ -64,15 +64,15 @@
 
 #Example Code (copy and paste this into a new script and source in the files in github directory)
 
-build_prototype(code_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/",
-                save_dir = "/storage/eICU/eICU_feature_extract/",
-
-                merge_identifier = "patientunitstayid",
-                feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space.csv",
-                label_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_label.csv",
-                outcomes = c("Expired", "Alive"),
-                experiment_name = "test"
-                )
+# build_prototype(code_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/",
+#                 save_dir = "/storage/eICU/eICU_feature_extract/",
+# 
+#                 merge_identifier = "patientunitstayid",
+#                 feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space.csv",
+#                 label_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_label.csv",
+#                 outcomes = c("Expired", "Alive"),
+#                 experiment_name = "test"
+#                 )
 
 
 #function below - do not alter - if so, submit an issue and make a fork/branch to work on the corrections
