@@ -19,5 +19,5 @@ build_prototype(code_dir = code_dir,
                 label_dir = paste0(code_dir, "/test_data/test_label.csv"),
                 outcomes = c("Expired", "Alive"),
                 experiment_name = "test",
-                Already_trained = TRUE
+                Already_trained = FALSE
 )
