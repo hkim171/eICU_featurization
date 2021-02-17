@@ -1,10 +1,12 @@
 #download packages in R
 
+## INSTRUCTIONS
 #make sure use following commands in terminal within MARCC.
 #ml R/3.6.1
 #ml gcc/5.5
 
-#run this script with Rscript download_packages.R
+#run this script with Rscript download_packages.R in MARCC terminal
+
 
 load_packages <- function(package_list) {
   #   Checks if given library is installed. If it is not, installs and loads it.
