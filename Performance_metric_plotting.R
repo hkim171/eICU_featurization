@@ -3,7 +3,7 @@
 performance_metric_plotting <- function(experiment_name, saved_file_location) {
 
 package_list <- c("tidyverse", "randomForestSRC", "ranger", "randomForest", "caret", "MLmetrics", "Metrics", 
-                  "EvaluationMeasures", "Rmisc", "data.table", "caretEnsemble")
+                  "EvaluationMeasures", "Rmisc", "data.table")
 load_packages(package_list)
   
   

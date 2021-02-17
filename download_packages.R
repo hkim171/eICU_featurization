@@ -25,6 +25,6 @@ load_packages <- function(package_list) {
 }
 
 package_list <- c("tidyverse", "data.table", "ranger", "randomForest", "caret", "MLmetrics", "Metrics", 
-                  "EvaluationMeasures", "Rmisc", "xgboost", "glmnet", "randomForestSRC", "caretEnsemble")
+                  "EvaluationMeasures", "Rmisc", "xgboost", "glmnet", "randomForestSRC")
 
 load_packages(package_list)
