@@ -64,15 +64,15 @@
 
 #Example Code (copy and paste this into a new script and source in the files in github directory)
 
-# build_prototype(code_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/", 
-#                 save_dir = "/storage/eICU/eICU_feature_extract/",
-#                 
-#                 merge_identifier = "patientunitstayid",
-#                 feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space.csv",
-#                 label_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_label.csv",
-#                 outcomes = c("Expired", "Alive"),
-#                 experiment_name = "test"
-#                 )
+build_prototype(code_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/",
+                save_dir = "/storage/eICU/eICU_feature_extract/",
+
+                merge_identifier = "patientunitstayid",
+                feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space.csv",
+                label_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_label.csv",
+                outcomes = c("Expired", "Alive"),
+                experiment_name = "test"
+                )
 
 
 #function below - do not alter - if so, submit an issue and make a fork/branch to work on the corrections
@@ -233,7 +233,7 @@ for(j in 1:num_outer_loop) {
   label$label[which(label$label == bad_outcome)] <-  "class_1"
   label$label <- as.factor(label$label)
   
-  label <- label %>% dplyr::select(tidyselect::all_of(merge_identifier), label)
+  label <- label %>% dplyr::select(merge_identifier, label)
   
   #combine with label. ** label is assumed to be a factor with column header "label"
   full_feature_space <- merge(label, full_feature_space, by = merge_identifier)
