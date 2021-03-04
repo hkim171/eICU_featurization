@@ -17,16 +17,18 @@
 # patientunitstayids:        patientunitstayid identifier list or dataframe with patientunitstayid column
 # 
 # eicu_dir:                  directory pointing to the raw eICU data tables (if all in one place)
-#                            extract patient utilizes patient and hospital tables in their original names: hospital.csv and patient.csv
+#                            extract patient utilizes patient and hospital tables in their original names: 
+#                            hospital.csv and patient.csv
 #
-# patient_table_dir:         [OPTIONAL] if and only if eicu_dir does not contain the patient table
+# patient_table:             [OPTIONAL] if and only if eicu_dir does not contain the patient table
 #
-# hospital_table_dir:        [OPTIONAL] if and only if eicu_dir does not contain the hospital table
+# hospital_table:            [OPTIONAL] if and only if eicu_dir does not contain the hospital table
 #
-# as_binary:                 Boolean - if set to TRUE will make categorical variables into one-hot-encoded (dummy) binary categories. 
+# as_binary:                 [OPTIONAL defualt = F] Boolean - if set to TRUE will make categorical variables 
+#                            into one-hot-encoded (dummy) binary categories. 
 #
-# labels_only:               Boolean - if set to TRUE, only extracts features relavant as labels (discuss with mentors to identify which
-#                            clinical outcomes are of interest)
+# labels_only:               [OPTIONAL defualt = F] Boolean - if set to TRUE, only extracts features relavant 
+#                            as labels (discuss with mentors to identify which clinical outcomes are of interest)
 #
 #-------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -53,59 +55,95 @@
 #-------------------------------------------------------------------------------------------------------------------------------------#
 
 #### Code example ####
-# library(data.table)
-# dir <- "/storage/eICU/" #data_dir
-# 
-# # source <- source("/storage/eICU/eICU_feature_extract/extract_patient_v1.0.R") #this is an example. you dont want to source the file you are
-# #running an example in - do not uncomment.
-# 
-# patient <- fread(paste0(dir, "/patient.csv"))
-# pids <- patient$patientunitstayid
-# hospital <- fread(paste0(dir, "/hospital.csv"))
-# dictionary_path = "/storage/eICU/eICU_feature_extract/ApacheDX_dict.xlsx"
-# function_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/"
-# 
-# patient_labels <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, make_binary = T, label_boolean = T, function_dir = function_dir)
-# 
-# patient_features <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, make_binary = T, label_boolean = F, function_dir = function_dir)
+library(data.table)
+dir <- "/storage/eICU/" #data_dir
+
+patient <- fread(paste0(dir, "/patient.csv"))
+pids <- patient$patientunitstayid
+hospital <- fread(paste0(dir, "/hospital.csv"))
+dictionary_path = "/storage/eICU/eICU_feature_extract/ApacheDX_dict.xlsx"
+function_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/"
+
+patient_labels <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, as_binary = T, labels_only = T, function_dir = function_dir)
+
+patient_features <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, as_binary = T, labels_only = F, function_dir = function_dir)
 
 
 ####Function
 
 extract_patient <- function(code_dir, 
-                            patientunitstayid_list, 
-                            patient_table, 
-                            hospital_table, 
-                            apachedx_dictionary_path, 
-                            make_binary, 
-                            label_boolean) {
-  require(tidyverse)
-  require(plotly)
-  require(chron)
-  require(openxlsx)
+                            patientunitstayid_list,
+                            eicu_dir,
+                            patient_table, #optional
+                            hospital_table, #optional
+                            as_binary, #optional
+                            labels_only ) { #optional
   
-  if (missing(function_dir)) {
-    stop("missing path to required_custom_functions.R")
+  #directory checks
+  if (!dir.exists(code_dir)) {
+    stop("the CODE directory is not valid and/or does not exist. please double check")
   }
   
-  source(paste0(function_dir, "/required_custom_functions.R"))
   
-  if (missing(make_binary)) {
-    make_binary <- FALSE
+  #check of required source scripts in directory
+  if (dir.exists(code_dir)) {
+    setwd(code_dir)
+    if (!file.exists("required_custom_functions.R")) {
+      stop("required_custom_functions.R is not within the code dir. Make sure code_dir is correct.\n
+            If correct, do not rename or move code out of the code_dir and ensure required_custom_functions.R\n
+            is in the directory")
+    } else {
+      source("required_custom_functions.R")
+    }
   }
   
-  if (missing(label_boolean)) {
-    label_boolean <- FALSE
+  #check if eicu_dir exists
+  if (!dir.exists(eicu_dir)) {
+    stop("eicu_dir does not exist - please double check")
   }
   
-  if (missing(apachedx_dictionary_path) & label_boolean) {
+  #check whether patient and hospital table directories have been specified, if not take eicu_dir and 
+  #create directory calls within it for patient.csv and hospital.csv. 
+  #error and messages included to inform user. 
+  if (missing(patient_table)) {
+    message("patient_table not directly specified - assuming patient.csv exists in eicu_dir")
+    patient_table <- paste0(eicu_dir, "/patient.csv")
+    
+    if(!file.exists(patient_table)) {
+      stop("patient.csv does not exist in the eicu_dir specified")
+    }
+  } else {
+    message("Using specified patient.csv in patient_table directory")
+  }
+  
+  if (missing(hospital_table)) {
+    message("hospital_table not directly specified - assuming hospital.csv exists in eicu_dir")
+    hospital_table <- paste0(eicu_dir, "/hospital.csv")
+    
+    if(!file.exists(hospital_table)) {
+      stop("hospital.csv does not exist in the eicu_dir specified")
+    }
+  } else {
+    message("Using specified hospital.csv in hospital_table directory")
+  }
+  
+  #set as_binary to FALSE and labels_only to FALSE by default. 
+  if (missing(as_binary)) {
+    as_binary <- FALSE
+  }
+  
+  if (missing(labels_only)) {
+    labels_only <- FALSE
+  }
+  
+  if (missing(apachedx_dictionary_path) & labels_only) {
     apachedx_dictionary_path <- NA
   } else if (missing(apachedx_dictionary_path)) {
     stop("missing path to apachedx_dictionary_excel_file")
   }
   
-  
-  
+  package_list <- c("tidyverse", "plotly", "chron", "openxlsx")
+  load_packages(package_list)
   
   #Will preprocess age to filter by age under 18. 
   #age -------------------------------------------------------------------
@@ -126,7 +164,7 @@ extract_patient <- function(code_dir,
   #main population of interest is adult yet eICU contains < 18. Remove anything under 18
   patient_table <- patient_table[which(patient_table$age >= 18), ]  
   
-  if (label_boolean == FALSE) {
+  if (labels_only == FALSE) {
     
     #will only dplyr::select the following raw data from table. 
     patient_table <- patient_table %>% dplyr::select(patientunitstayid, gender, age, ethnicity, 
@@ -279,13 +317,13 @@ extract_patient <- function(code_dir,
                          ]
     
     #binarize
-    if (make_binary) {
+    if (as_binary) {
       patient_table <- create_binary(as.data.frame(patient_table))
     }
     
     return(patient_table)
     
-  } else if (label_boolean == TRUE) {
+  } else if (labels_only == TRUE) {
     
     #extracting labels ----------------------------------------------------
     patient_table$unit_LOS <- patient_table$unitdischargeoffset/60
@@ -314,7 +352,7 @@ extract_patient <- function(code_dir,
     patient_table <- patient_table[which(patient_table$patientunitstayid %in% patientunitstayid_list), ]
     
     #binarize
-    if (make_binary) {
+    if (as_binary) {
       patient_table <- create_binary(as.data.frame(patient_table))
     }
     

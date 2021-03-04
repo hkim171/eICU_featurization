@@ -8,6 +8,9 @@
 #V0.0 - 2/15/2021 - organized to be modular
 #V0.1 - 2/16/2021 - organized to be a function to be run. 
 #V0.2 - 2/17/2021 - MARCC tested and code organized further. 
+#V0.3 - 3/1/2021  - Random forest parameter has changed to save impurity ranking during
+# training. This means, you must retrain the model if you want to use impurity feature
+# rankings. 
 
 #### Output
 #Creates directory with saved models, performance metrics, and plots of:
@@ -301,7 +304,7 @@ for(j in 1:num_outer_loop) {
     
     
     modelrf <- caret::train(label~., data = training, method="ranger", metric = 'ROC',trControl=control,
-                            weights = model_weights)
+                            weights = model_weights, importance = 'impurity')
     print(paste0(identifier, "-", j, "-rf done"))
     save(modelrf,  file = paste(identifier, '_modelRF_iter_',j, '.Rdata', sep = ''))
     
