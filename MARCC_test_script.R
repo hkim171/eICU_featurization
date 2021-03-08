@@ -44,3 +44,17 @@ random_forest_rank(experiment_folder_dir <- experiment_folder_dir,
                    num_outer_loop = 5,
                    how_many_top_features = 50,
                    use_trained_rf = FALSE)
+
+XG_rank(experiment_folder_dir <- experiment_folder_dir,
+                   code_dir <- code_dir,
+                   experiment_name = "test",
+                   num_outer_loop = 5,
+                   how_many_top_features = 50,
+                   shap = TRUE)
+
+XG_rank(experiment_folder_dir <- experiment_folder_dir,
+                   code_dir <- code_dir,
+                   experiment_name = "test",
+                   num_outer_loop = 5,
+                   how_many_top_features = 50,
+                   shap = FALSE)
