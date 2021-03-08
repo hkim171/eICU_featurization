@@ -12,7 +12,7 @@
 
 #### input parameters: ####
 # code_dir:                  Main github pull directory - ensures all required scripts are in 
-#                            one place - "./eICU_featureization/" 
+#                            one place - "./eICU_featurization/" 
 #                           
 # patientunitstayids:        patientunitstayid identifier list or dataframe with patientunitstayid column
 # 
@@ -68,6 +68,11 @@ patient_labels <- extract_patient(patientunitstayid_list = pids, patient_table =
 
 patient_features <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, as_binary = T, labels_only = F, function_dir = function_dir)
 
+code_folder_dir <- "/storage/eICU/eICU_feature_extract/"
+code_dir <- paste0(code_folder_dir, "/eICU_featurization")
+
+patient_features <- extract_patient(code_dir = code_dir, eicu_dir = "/storage/eICU/", patientunitstayid_list = pids, as_binary = T, labels_only = F)
+
 
 ####Function
 
@@ -95,6 +100,16 @@ extract_patient <- function(code_dir,
     } else {
       source("required_custom_functions.R")
     }
+    
+    if (!file.exists("ApacheDX_dict.xlsx")) {
+      stop("ApacheDX_dict.xlsx is not within the code dir. Make sure code_dir is correct.\n
+            If correct, do not rename or move code out of the code_dir and ensure ApacheDX_dict.xlsx\n
+            is in the directory")
+    } else {
+      print("found ApacheDX_dict.xlsx in code dir")
+      apachedx_dictionary_path <- paste0(code_dir, "/ApacheDX_dict.xlsx")
+    }
+    
   }
   
   #check if eicu_dir exists
@@ -111,6 +126,8 @@ extract_patient <- function(code_dir,
     
     if(!file.exists(patient_table)) {
       stop("patient.csv does not exist in the eicu_dir specified")
+    } else {
+      patient_table <- fread(patient_table)
     }
   } else {
     message("Using specified patient.csv in patient_table directory")
@@ -122,6 +139,8 @@ extract_patient <- function(code_dir,
     
     if(!file.exists(hospital_table)) {
       stop("hospital.csv does not exist in the eicu_dir specified")
+    } else {
+      hospital_table <- fread(hospital_table)
     }
   } else {
     message("Using specified hospital.csv in hospital_table directory")
@@ -135,13 +154,7 @@ extract_patient <- function(code_dir,
   if (missing(labels_only)) {
     labels_only <- FALSE
   }
-  
-  if (missing(apachedx_dictionary_path) & labels_only) {
-    apachedx_dictionary_path <- NA
-  } else if (missing(apachedx_dictionary_path)) {
-    stop("missing path to apachedx_dictionary_excel_file")
-  }
-  
+
   package_list <- c("tidyverse", "plotly", "chron", "openxlsx")
   load_packages(package_list)
   
