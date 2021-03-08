@@ -1,13 +1,14 @@
 #### Usage: extract features from patient table
 # Author: Han
 # Updated and Formatted for distribution: FEB 2021
-# V1.1
+# V1.2
 # Fixes:
 # 2/18/21 - updates to function parameters
 #         - usage of code_dir instead of function_dir to load in data.
 #         - usage of eICU_dir instead of individual table calls to load in patient and hospital data
 #         - integrates optional boolean IF patient and hospital tables are not located in the same directory
 #         - renamed make_binary and label_boolean to as_binary and labels_only
+# 3/8/21  - Updates to input parameters for simplicity. (less parameters)
 #-------------------------------------------------------------------------------------------------------------------------------------#
 
 #### input parameters: ####
