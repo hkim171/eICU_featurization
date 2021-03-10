@@ -58,3 +58,9 @@ XG_rank(experiment_folder_dir <- experiment_folder_dir,
                    num_outer_loop = 5,
                    how_many_top_features = 50,
                    shap = FALSE)
+
+GLM_rank(experiment_folder_dir <- experiment_folder_dir,
+                   code_dir <- code_dir,
+                   experiment_name = "test",
+                   num_outer_loop = 5,
+                   how_many_top_features = 50)
