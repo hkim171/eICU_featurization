@@ -1,5 +1,10 @@
 #All in one Plotting 
 
+#V0.1 - 2/15/2021 - Plots ROC, PRC, and calibration curve. generates organized cSV file of results
+#v0.2 - 3/10/2021 - Fixed naming conventions and plot title. Altered which plots were saved. 
+
+
+
 performance_metric_plotting <- function(experiment_name, saved_file_location) {
 
 package_list <- c("tidyverse", "randomForestSRC", "ranger", "randomForest", "caret", "MLmetrics", "Metrics", 
@@ -176,7 +181,7 @@ for (identifier in identifiers) {
       
       calib_plot <- ggplot(calib, aes(x = midpoint, y = Percent, group = as.factor(type), color = as.factor(type))) + geom_smooth(method = "loess") +
         geom_abline(intercept = 0, slope = 1, color = "grey50", linetype = 2) +
-        labs(subtitle = paste0(identifier, "--",subset,"--", model_name,"\nclass_1: " , temp_balance$class_1, " (",temp_balance$class_1_prop,")", "; class_0: ", temp_balance$class_0, " (",temp_balance$class_0_prop,")")) + 
+        labs(subtitle = paste0("Model = ", model_name)) + 
         scale_color_discrete(name = "") + theme(
           plot.title = element_text(size = 20, face = "bold"),
           plot.subtitle = element_text(size = 12),
@@ -185,7 +190,7 @@ for (identifier in identifiers) {
         ylim(0,100) +
         xlim(0,100)
       
-      ggsave(paste0("eICU_calib_plot_", identifier, "_", subset, "_", model_name, ".png"), width = 6, height = 5, dpi = 300, units = "in")
+      # ggsave(paste0("calibration_", identifier, "_", model_name, "_only_.png"), width = 6, height = 5, dpi = 300, units = "in")
       
       
       calib_results <- calibrated_test_results[which(calibrated_test_results$identifier == identifier & 
@@ -205,8 +210,18 @@ for (identifier in identifiers) {
       temp_plots <- list()
       for (metric in metrics) {
         
+        if (metric == "Acc") {
+          title_plot <- "Accuracy"
+        } else if (metric == "Sens") {
+          title_plot <- "Sensitivity"
+        } else if (metric == "Spec") {
+          title_plot <- "Specificitiy"
+        } else if (metric == "AUC") {
+          title_plot <- "AUROC"
+        }
+        
         temp_plots[[metric]] <- ggplot(test_results, aes(x = as.numeric(as.character(.data[[metric]])), y = type, group = factor(type), color = factor(type))) + geom_boxplot() + 
-          ylab(NULL) + xlab(NULL) + ggtitle(metric) + theme(legend.position = "none") + xlim(0.5, 1)
+          ylab(NULL) + xlab(NULL) + ggtitle(title_plot) + theme(legend.position = "none") + xlim(0, 1)
         
       }
       
@@ -216,16 +231,18 @@ for (identifier in identifiers) {
       temp_plot_perid <- gridExtra::grid.arrange(calib_plot, x, ncol = 2)
       # dev.off()
       
-      png(paste0(identifier, "_", subset, "_", model_name, "_test_calibration_c1.png"), width = 12, height = 5, units = "in", res = 300)
-      gridExtra::grid.arrange(temp_plot_perid, ncol = 1)
-      dev.off()
+      # png(paste0("calibration_", identifier, "_", model_name, "_only_.png"), width = 12, height = 5, units = "in", res = 300)
+      # gridExtra::grid.arrange(temp_plot_perid, ncol = 1)
+      # dev.off()
       
     }
     
   }
   
-  png(paste0(identifier, "_test_calibration_c1.png"), width = 11, height = 18, units = "in", res = 300)
-  gridExtra::grid.arrange(per_identifier_plot$xg, per_identifier_plot$rf, per_identifier_plot$glm, ncol = 1)
+  png(paste0("calibration_", identifier, "_compiled.png"), width = 11, height = 13, units = "in", res = 300)
+  gridExtra::grid.arrange(per_identifier_plot$xg, per_identifier_plot$rf, per_identifier_plot$glm, ncol = 1,
+                          top = grid::textGrob(paste0("Calibration plots for experiment ", identifier, ": ", length(unique(temp_probs$outer_fold)), " outer folds", "\nClass imbalance: class_1: " , temp_balance$class_1, " (",temp_balance$class_1_prop,")", "; class_0: ", temp_balance$class_0, " (",temp_balance$class_0_prop,")"), 
+                                               gp = grid::gpar(fontsize = 20)) )
   dev.off()
   
 }
@@ -354,7 +371,7 @@ for (identifier in identifiers) {
     ROC_plot <- ggplot(data=all_FPR_TPR, aes(x=FPR.mean, y=TPR.mean, group = model, color = model)) + geom_line(size=0.6, alpha=0.8) +
       geom_ribbon(aes(x=FPR.mean, y=TPR.mean,ymin=TPR.CI_lower, ymax=TPR.CI_upper, xmin = FPR.CI_lower, xmax=FPR.CI_upper, group = model, fill= model, color = model), alpha = 0.2, show.legend = F, linetype=0) +
       geom_abline(intercept = 0, slope = 1, color = "grey50", linetype = 2) + xlab("False Positive Rate") + ylab("True Positive Rate") +
-      labs(subtitle = paste0(subset,": 25 outer fold--", identifier, "--", model_name)) + 
+      labs(subtitle = paste0("ROC curves for ", length(outerfolds)," outer folds")) + 
       scale_color_discrete(name = "") + theme(
         plot.title = element_text(size = 20, face = "bold"),
         plot.subtitle = element_text(size = 12),
@@ -362,7 +379,7 @@ for (identifier in identifiers) {
         axis.title = element_text(size = 12)
       ) 
     
-    ggsave(paste0("eICU_ROC_plot_", identifier, "_", subset, "_", model_name, ".png"), width = 6, height = 5, dpi = 300, units = "in")
+    # ggsave(paste0("ROC_plot_", identifier, "_", model_name, "_only.png"), width = 6, height = 5, dpi = 300, units = "in")
     
     
     metrics <- c("Acc", "AUC", "Sens", "Spec")
@@ -370,8 +387,18 @@ for (identifier in identifiers) {
     temp_plots <- list()
     for (metric in metrics) {
       
+      if (metric == "Acc") {
+        title_plot <- "Accuracy"
+      } else if (metric == "Sens") {
+        title_plot <- "Sensitivity"
+      } else if (metric == "Spec") {
+        title_plot <- "Specificitiy"
+      } else if (metric == "AUC") {
+        title_plot <- "AUROC"
+      }
+      
       temp_plots[[metric]] <- ggplot(temp_results, aes(x = as.numeric(as.character(.data[[metric]])), y = model, group = factor(model), color = factor(model))) + geom_boxplot() + 
-        ylab(NULL) + xlab(NULL) + ggtitle(metric) + theme(legend.position = "none") + xlim(0.5, 1)
+        ylab(NULL) + xlab(NULL) + ggtitle(title_plot) + theme(legend.position = "none") + xlim(0, 1)
       
     } 
     
@@ -383,8 +410,10 @@ for (identifier in identifiers) {
   
 }
 
-png(paste0("eICU_Full_Calibrated_Test_ROC_results.png"), width = 8, height = 3, units = "in", res = 300)
-gridExtra::grid.arrange(per_identifier_plot[[1]], ncol = 1)
+png(paste0("ROC_plot_", identifier, "_compiled.png"), width = 8, height = 4, units = "in", res = 300)
+gridExtra::grid.arrange(per_identifier_plot[[1]], ncol = 1,
+                        top = grid::textGrob(paste0(identifier), 
+                                             gp = grid::gpar(fontsize = 15)) )
 dev.off()
 
 
@@ -520,7 +549,7 @@ for (identifier in identifiers) {
       geom_ribbon(aes(x=Rec.mean, y=Prec.mean,ymin=Prec.CI_lower, ymax=Prec.CI_upper, xmin = Rec.CI_lower, xmax=Rec.CI_upper, group = model, fill= model, color = model), alpha = 0.2, show.legend = F, linetype=0) +
     
       geom_hline(yintercept = lower_class, color = "grey50", linetype = 2) + xlab("Recall") + ylab("Precision") +
-      labs(subtitle = paste0(subset, "-25 outer fold--", identifier, "--", model_name))+ 
+      labs(subtitle = paste0("PR curves for ", length(outerfolds)," outer folds"))+ 
       scale_color_discrete(name = "") + theme(
         plot.title = element_text(size = 20, face = "bold"),
         plot.subtitle = element_text(size = 12),
@@ -529,15 +558,23 @@ for (identifier in identifiers) {
       ) +
       ylim(0,1)
     
-    ggsave(paste0("eICU_PR_plot_", identifier, "_", subset, ".png"), width = 6, height = 5, dpi = 300, units = "in")
+    # ggsave(paste0("PR_plot_", identifier, ".png"), width = 6, height = 5, dpi = 300, units = "in")
     
     metrics <- c("PR_AUC", "Precision", "Recall", "F1")
     
     temp_plots <- list()
     for (metric in metrics) {
       
+      if (metric == "F1") {
+        title_plot <- "F1 Score"
+      } else if (metric == "PR_AUC") {
+        title_plot <- "AUPRC"
+      } else {
+        title_plot <- metric
+      }
+      
       temp_plots[[metric]] <- ggplot(temp_results, aes(x = as.numeric(as.character(.data[[metric]])), y = model, group = factor(model), color = factor(model))) + geom_boxplot() + 
-        ylab(NULL) + xlab(NULL) + ggtitle(metric) + theme(legend.position = "none") + xlim(0.5, 1)
+        ylab(NULL) + xlab(NULL) + ggtitle(title_plot) + theme(legend.position = "none") + xlim(0, 1)
       
     }
     
@@ -549,9 +586,11 @@ for (identifier in identifiers) {
   }
 }
 
-png(paste0("Full_Calibrated_Test_PR_results.png"), width = 8, height = 3, units = "in", res = 300)
+png(paste0("PR_plot_", identifier, "_compiled.png"), width = 8, height = 4, units = "in", res = 300)
 # gridExtra::grid.arrange(per_identifier_plot[[1]], per_identifier_plot[[2]], per_identifier_plot[[3]], ncol = 1)
-gridExtra::grid.arrange(per_identifier_plot[[1]], ncol = 1)
+gridExtra::grid.arrange(per_identifier_plot[[1]], ncol = 1,
+                        top = grid::textGrob(paste0(identifier), 
+                                             gp = grid::gpar(fontsize = 15)))
 dev.off()
 
 
@@ -608,7 +647,7 @@ for (identifier in identifiers){
   }
 }
 
-write.csv(compiled_data_table, "eicu_model_results_formatted.csv", row.names = F)
+write.csv(compiled_data_table, "model_results_table.csv", row.names = F)
 
 }
 
