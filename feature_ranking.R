@@ -457,6 +457,9 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
     
     top_features <- unique(temp_xg_ranks_subset$rowname)
 
+    
+    ########## SHAP summary plot ###########
+    ## ISSUE: plotting the opposite relationship. need fixing
     for (i in 1:num_outer_loop) {
       setwd(xg_object_dir)
       xg_obj_name <- paste0(experiment_name, "_modelXG_iter_", i, ".Rdata")
@@ -486,7 +489,9 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
     temp_xg_ranks_long <- temp_xg_ranks_long[,-6]
     colnames(temp_xg_ranks_long)[6] <- "mean_value"
     
-    temp_xg_ranks_long$variable <- fct_reorder(temp_xg_ranks_long$variable, -temp_xg_ranks_long$mean_value)
+    temp_xg_ranks_long$mean_value <- temp_xg_ranks_long$mean_value * -1
+    temp_xg_ranks_long$variable <- fct_reorder(temp_xg_ranks_long$variable, temp_xg_ranks_long$mean_value)
+    temp_xg_ranks_long$value <- temp_xg_ranks_long$value * -1
     
     p <- shap.plot.summary(temp_xg_ranks_long)
     p <- p + ggtitle(paste0(experiment_name, ": top ",how_many_top_features," trained XGBoost SHAP Summary \nSina plots over ", num_outer_loop, " outer fold iterations"))
