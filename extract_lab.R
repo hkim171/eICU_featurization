@@ -27,23 +27,48 @@
 #   upper_hr <- temp_row$offset / 60
 #   lower_hr <- upper_hr - 6
 # 
-#   temp_lab <- extract_lab(patientunitstayids = tempid, table_df = lab_df, lower_hr = lower_hr, upper_hr = upper_hr, per_pid_boolean = T, pre_stats = T, extras = T)
+#   temp_lab <- extract_lab(patientunitstayids = tempid, table_df = lab_df, lower_hr = lower_hr, upper_hr = upper_hr, per_pid = T, pre_stats = T, extras = T)
 # 
 #   lab_final <- rbind.fill(lab_final, temp_lab)
 # }
 
 
+######
+#Dataframe format for patientunitstayid_dataframe:
 
+#column 1: patientunitstayid
+#column 2: start_obs_window in hours
+#column 3: stop_obs_window in hours
 
+#Even if they are from the same window, requires the same data format. 
+#
+#
+#
+
+#Example taken from pids from test_data
+#
+code_dir <- "/storage/eICU/eICU_feature_extract/eICU_featurization/"
+data_dir <- paste0(code_dir, "/test_data/")
+
+patientunitstayid_dataframe <- fread(paste0(data_dir, "/test_feature_space.csv"))[,1]
+patientunitstayid_dataframe$start <- sample(seq(from = 0, to = 24, by = 0.01), size = nrow(patientunitstayid_dataframe), replace = T)
+patientunitstayid_dataframe$end <- patientunitstayid_dataframe$start + 24
+
+eicu_dir <- "/storage/eICU/"
+per_pid <- TRUE
 
 
 extract_lab <- function(code_dir, 
-                        patientunitstayid_list,
+                        patientunitstayid_dataframe,
                         eicu_dir,
                         lab_table, #optional
-                        hospital_table, #optional
-                        as_binary, #optional
-                        labels_only ) { #optional
+                        per_pid #T/F
+                        ) {
+  
+  #directory checks
+  if (!dir.exists(code_dir)) {
+    stop("the CODE directory is not valid and/or does not exist. please double check")
+  }
   
   if (dir.exists(code_dir)) {
     setwd(code_dir)
@@ -60,10 +85,82 @@ extract_lab <- function(code_dir,
             If correct, do not rename or move code out of the code_dir and ensure required_custom_functions.R\n
             is in the directory") 
     } else {
-      source("Performance_metric_plotting.R")
+      source("extract_lab.R")
     }
   }
   
+  #check if eicu_dir exists
+  if (!dir.exists(eicu_dir)) {
+    stop("eicu_dir does not exist - please double check")
+  }
+  
+  #check whether lab table directories have been specified, if not take eicu_dir and 
+  #create directory calls within it for lab.csv and/or lab.Rds 
+  #error and messages included to inform user. 
+  if (missing(lab_table)) {
+    message("lab_table not directly specified - assuming patient.csv exists in eicu_dir")
+    lab_table_rds <- paste0(eicu_dir, "/lab.Rds")
+    lab_table_csv <- paste0(eicu_dir, "/lab.csv")
+    
+    if(!file.exists(lab_table_rds)) {
+      message("lab.Rds does not exist in the eicu_dir specified, will attempt to read in lab.csv if it exists.")
+      
+      if(!file.exists(lab_table_csv)) {
+        stop("lab.csv and lab.Rds does not exist in the eicu_dir specified, please check again")
+      } else {
+        message("loading lab.csv")
+        lab_table <- fread(lab_table_csv)
+      }
+      
+    } else {
+      message("loading lab.Rds")
+      lab_table <- readRDS(lab_table_rds)
+    }
+    
+  } else {
+    message("Using specified lab file in lab_table directory")
+  }
+  
+  #set as_binary to FALSE and labels_only to FALSE by default. 
+  if (missing(per_pid)) {
+    stop("Must specify whether to consider a per_pid = TRUE (different start and stop offset per pid)
+         Or, per_pid = FALSE (the same start and stop offset per pid)")
+  }
+  
+  package_list <- c("tidyverse", "tidyverse", "data.table", "doParallel")
+  load_packages(package_list)
+  
+  
+  start_unique_count <- length(unlist(unique(patientunitstayid_dataframe[,2])))
+  stop_unique_count <- length(unlist(unique(patientunitstayid_dataframe[,3])))
+  
+  unique_counts <- start_unique_count + stop_unique_count
+  
+  if (unique_counts != 0 & per_pid) {
+    message("SANITY CHECK: starts and stops do differ per pid")
+  } else{
+    stop("starts and stops do not differ per pid, or per_pid was set to F yet starts ands stops are different per pid.")
+  }
+  
+  pids <- unlist(unique(patientunitstayid_dataframe[,1]))
+  lab_table <- lab_table[which(lab_table$patientunitstayid %in% pids), ]
+  lab_table <- lab_table %>% dplyr::select(patientunitstayid, labresultrevisedoffset, labname, labresult)
+
+  lab_final <- rbind()
+  for (i in 1:length(pids)) {
+    print(paste0("--------------", i, "--------------"))
+
+    tempid <- pids[i]
+    temp_row <- patientunitstayid_dataframe[patientunitstayid_dataframe$patientunitstayid == tempid, ]
+    lower_hr <- temp_row[[2]]
+    upper_hr <- temp_row[[3]]
+
+
+    lab_table_temp <- lab_table[which(lab_table$patientunitstayid == tempid), ]
+    temp_lab <- extract_lab_base_function(patientunitstayids = tempid, table_df = lab_table_temp, lower_hr = lower_hr, upper_hr = upper_hr, per_pid = T, pre_stats = T, extras = T)
+
+    lab_final <- rbind.fill(lab_final, temp_lab)
+  }
   
   
   
@@ -71,73 +168,15 @@ extract_lab <- function(code_dir,
 }
 
 
-extract_lab_base_function <- function(code_dir,
-                                      patientunitstayid_list, 
+extract_lab_base_function <- function(patientunitstayids, 
                                       table_df, 
                                       lower_hr, 
                                       upper_hr, 
-                                      per_pid_boolean, 
+                                      per_pid, 
                                       pre_stats, 
                                       extras) {
   
-  #check of required source scripts in directory
-  if (dir.exists(code_dir)) {
-    setwd(code_dir)
-    if (!file.exists("required_custom_functions.R")) {
-      stop("required_custom_functions.R is not within the code dir. Make sure code_dir is correct.\n
-            If correct, do not rename or move code out of the code_dir and ensure required_custom_functions.R\n
-            is in the directory")
-    } else {
-      source("required_custom_functions.R")
-    }
-    
-    if (!file.exists("Performance_metric_plotting.R")) {
-      stop("Performance_metric_plotting.R is not within the code dir. Make sure code_dir is correct.\n
-            If correct, do not rename or move code out of the code_dir and ensure required_custom_functions.R\n
-            is in the directory") 
-    } else {
-      source("Performance_metric_plotting.R")
-    }
-  }
-  
-  #set proper directory then make sure all random forest trained files exist. 
-  
-  if (missing(use_trained_rf)) {
-    use_trained_rf <- FALSE
-  }
-  
-  if (use_trained_rf) {
-    rf_object_dir <- paste0(experiment_folder_dir, "/", experiment_name, "/")
-    if (dir.exists(rf_object_dir)) {
-      setwd(rf_object_dir)
-      for (i in 1:num_outer_loop) {
-        rf_obj_name <- paste0(experiment_name, "_modelRF_iter_", i, ".Rdata")
-        
-        if (!file.exists(rf_obj_name)) {
-          stop(paste0("make sure that experiment_folder_dir is the folder that the experiment_name folder sits.\nAlso 
-               double check that ", rf_obj_name, " exists in ", rf_object_dir))
-        } else {
-          print(paste0(rf_obj_name, " found"))
-        }
-      }
-    }
-  }
-  
-  if (missing(num_outer_loop)) {
-    stop("num_outer_loop must be specified - this is the parameter num_outer_loop for the build_prototype function")
-  }
-  
-  
-  package_list <- c("randomForestSRC", "tidyverse", "data.table", "ranger", "randomForest", "caret", "MLmetrics", "Metrics", 
-                    "EvaluationMeasures", "Rmisc", "xgboost", "glmnet")
-  load_packages(package_list)
-  
-  
-  source("./useful_functions.R")
-  require(tidyverse)
-  require(plotly)
-  library(caret)
-  library(doParallel)
+ #set proper directory then make sure all random forest trained files exist. 
   
   if (missing(lower_hr)) {
     lower_hr <- -Inf
@@ -147,18 +186,25 @@ extract_lab_base_function <- function(code_dir,
     upper_hr <- Inf
   }
   
-  if (missing(per_pid_boolean)) {
-    per_pid_boolean == FALSE
-  }
-  
   if (missing(extras)) {
     extras == FALSE
   }
 
-  if (per_pid_boolean == TRUE) {
+  if (per_pid == TRUE) {
     patientunitstayids <- c(patientunitstayids)
   }
   
+  #fix some of the varnames for uniformity by removing spaces, numbers, dots, and other unsavory variable names.
+  table_df$labname <- as.character(table_df$labname)
+  table_df$labname <- gsub("-", "", table_df$labname)
+  table_df$labname <- gsub(" ", "_", table_df$labname)
+  table_df$labname <- gsub("__", "_", table_df$labname)
+  table_df$labname <- gsub("\\(|\\)", "", table_df$labname)
+  table_df$labname <- gsub("\\%|\\)", "percent", table_df$labname)
+  table_df$labname <- gsub("\\.", "", table_df$labname)
+  
+  table_df$labname[which(table_df$labname == "bedside_glucose")] <- "glucose"
+  table_df$labname[which(table_df$labname == "HCO3")] <- "bicarbonate"
   
   
   # filter for pids and time frame
@@ -179,34 +225,31 @@ extract_lab_base_function <- function(code_dir,
   colnames(lab_features) <- c("patientunitstayid")
   id <- "patientunitstayid"
   
-  #fix some of the varnames for uniformity by removing spaces, numbers, dots, and other unsavory variable names.
-  table_df$labname <- as.character(table_df$labname)
-  table_df$labname <- gsub("-", "", table_df$labname)
-  table_df$labname <- gsub(" ", "_", table_df$labname)
-  table_df$labname <- gsub("__", "_", table_df$labname)
-  table_df$labname <- gsub("\\(|\\)", "", table_df$labname)
-  table_df$labname <- gsub("\\%|\\)", "percent", table_df$labname)
-  table_df$labname <- gsub("\\.", "", table_df$labname)
-  
-  table_df$labname[which(table_df$labname == "bedside_glucose")] <- "glucose"
-  table_df$labname[which(table_df$labname == "HCO3")] <- "bicarbonate"
+
+  premeanperpatient_final <- cbind()
+  if (pre_stats == TRUE) {
+    varnames <- as.character(unique(pre_stats_df$labname))
+    # View(varnames)
+    
+    for (i in 1:length(varnames)) {
+      labname <- as.character(varnames[i])
+      # print(i)
+      
+      #find pre-stats ----------------------------------------------------------------------------------------------
+      idx <- which(pre_stats_df$labname == labname)
+      temppre <- pre_stats_df[idx, ] %>% droplevels(.)
+      premeanperpatient <- temppre %>% group_by(patientunitstayid) %>% dplyr::summarise(temppre_mean = mean(labresult, 
+                                                                                                            na.rm = T))
+      colnames(premeanperpatient) <- c(id, paste0(labname, "_pre_mean"))
+    }
+  }
 
   
   varnames <- as.character(unique(table_df$labname))
-  # View(varnames)
   
   for (i in 1:length(varnames)) {
     labname <- as.character(varnames[i])
     # print(i)
-
-    #find pre-stats ----------------------------------------------------------------------------------------------
-    if (pre_stats == TRUE) {
-      idx <- which(pre_stats_df$labname == labname)
-      temppre <- pre_stats_df[idx, ] %>% droplevels(.)
-      premeanperpatient <- temppre %>% group_by(patientunitstayid) %>% dplyr::summarise(temppre_mean = mean(labresult, 
-                                                                                                           na.rm = T))
-      colnames(premeanperpatient) <- c(id, paste0(labname, "_pre_mean"))
-    }
     
     #find simple statistics --------------------------------------------------------------------------------------
     idx <- which(table_df$labname == labname)
@@ -236,12 +279,12 @@ extract_lab_base_function <- function(code_dir,
     if (extras == T) {
       
       #first
-      firstperpatient <- templabs %>% group_by(patientunitstayid) %>% slice(which.min(labresultrevisedoffset))
+      firstperpatient <- templabs %>% group_by(patientunitstayid) %>% dplyr::slice(which.min(labresultrevisedoffset))
       firstperpatient <- firstperpatient %>% dplyr::select(patientunitstayid, labresult)
       colnames(firstperpatient) <- c(id, paste0(labname, "_first"))
       
       #last
-      lastperpatient <- templabs %>% group_by(patientunitstayid) %>% slice(which.max(labresultrevisedoffset))
+      lastperpatient <- templabs %>% group_by(patientunitstayid) %>% dplyr::slice(which.max(labresultrevisedoffset))
       lastperpatient <- lastperpatient %>% dplyr::select(patientunitstayid, labresult)
       colnames(lastperpatient) <- c(id, paste0(labname, "_last"))
       
@@ -274,10 +317,7 @@ extract_lab_base_function <- function(code_dir,
     # if (length(tmp_cor_varnames != 0)) {
     #   combined <- combined[ , -which(names(combined) %in% tmp_cor_varnames)]
     # }
-    
-    if (pre_stats == TRUE) {
-      combined <- merge(combined, premeanperpatient, by = "patientunitstayid", all = T)
-    }
+  
     
     lab_features <- merge(lab_features, combined, by = "patientunitstayid", all = T)
     lab_features <- replace_infinite(lab_features, NA)

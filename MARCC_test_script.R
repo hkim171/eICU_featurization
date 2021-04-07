@@ -12,6 +12,18 @@ code_dir <- paste0(code_folder_dir, "/eICU_featurization")
 
 source(paste0(code_dir, "/model_guide.R"))
 
+build_prototype(code_dir = code_dir,
+                save_dir = code_folder_dir,
+                num_outer_loop = 5,
+                cross_validation_k = 5,
+                merge_identifier = "patientunitstayid",
+                feature_dir = paste0(code_dir, "/test_data/test_feature_space.csv"),
+                label_dir = paste0(code_dir, "/test_data/test_label.csv"),
+                outcomes = c("Expired", "Alive"),
+                experiment_name = "test",
+                Already_trained = FALSE
+)
+
 # build_prototype(code_dir = code_dir, 
 #                 save_dir = code_folder_dir,
 #                 num_outer_loop = 5,
@@ -21,20 +33,8 @@ source(paste0(code_dir, "/model_guide.R"))
 #                 label_dir = paste0(code_dir, "/test_data/test_label.csv"),
 #                 outcomes = c("Expired", "Alive"),
 #                 experiment_name = "test",
-#                 Already_trained = FALSE
+#                 Already_trained = TRUE
 # )
-
-build_prototype(code_dir = code_dir, 
-                save_dir = code_folder_dir,
-                num_outer_loop = 5,
-                cross_validation_k = 5,
-                merge_identifier = "patientunitstayid",
-                feature_dir = paste0(code_dir, "/test_data/test_feature_space.csv"),
-                label_dir = paste0(code_dir, "/test_data/test_label.csv"),
-                outcomes = c("Expired", "Alive"),
-                experiment_name = "test",
-                Already_trained = TRUE
-)
 
 source(paste0(code_dir, "/Performance_metric_plotting.R"))
 performance_metric_plotting(experiment_name = "test", saved_file_location = paste0(code_folder_dir, "/", "test"))

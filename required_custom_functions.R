@@ -1,5 +1,31 @@
 #assortment of functions
 
+#function created to simplify the loading of eICU data based on table directory. 
+#This will help to use this code on other machines. 
+read.eicu <- function(directory, tablename, extension) {
+  #checks for two extensions: variations of csv and rds
+  #extension should represent the case of the extension of the file
+  #to be loaded 
+  
+  if (grepl(".", extension, fixed=TRUE)) {
+    extension <- gsub("[[:punct:]]", "", extension)
+  }
+  
+  if(extension == "csv" | extension == "CSV" | extension == "Csv") {
+    
+    return(data.table::fread(paste0(directory, "/",tablename, ".", extension)))
+    
+  } else if (extension == "rds" | extension == "RDS" | extension == "Rds") {
+    
+    return(readRDS(paste0(directory, "/",tablename, ".", extension)))
+  } else {
+    stop("check extension")
+  }
+  
+}
+
+
+
 #finds which columns of a dataframe are character vectors
 which_character <- function(df) {
   df <- as.data.frame(df, stringasfactor = F)

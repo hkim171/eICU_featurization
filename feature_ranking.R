@@ -563,7 +563,7 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
   }
   
   #set proper directory then make sure all random forest trained files exist. 
-
+  use_trained_glm <- T
   if (use_trained_glm) {
     glm_object_dir <- paste0(experiment_folder_dir, "/", experiment_name, "/")
     if (dir.exists(glm_object_dir)) {
@@ -618,6 +618,9 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
     training <- training %>% dplyr::select(-label)
     
     training <- as.data.frame(scale(training))
+    training <- replace_nan(df = training, replace_with = NA)
+    training <- training[ , colSums(is.na(training)) == 0]
+        
     training <- cbind(training_label, training)
     
     tune_grid <- expand.grid(lambda = lambda, alpha = alpha)
