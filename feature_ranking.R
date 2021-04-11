@@ -726,6 +726,7 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
   } else {
     top_pos_coeffs <- pos_coeffs
     pos_count <- nrow(top_pos_coeffs)
+    top_pos_ordering <- pos_ordering[1:nrow(pos_coeffs)] %>% droplevels(.)
   }
   
   if (nrow(neg_coeffs) >= how_many_top_features) {
@@ -735,6 +736,7 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
   } else {
     top_neg_coeffs <- neg_coeffs
     neg_count <- nrow(top_neg_coeffs)
+    top_neg_ordering <- neg_ordering[1:nrow(neg_coeffs)] %>% droplevels(.)
   }
   
   limit <- round(max(abs(glm_coeffs$beta_avg), na.rm = T), digits = 1) + 0.1
