@@ -54,25 +54,25 @@
 #BMI and all other ideal body weight calculations are derived from weight and height. 
 #categorizations of APACHE admission diagnosis. 
 #-------------------------------------------------------------------------------------------------------------------------------------#
-
-#### Code example ####
-library(data.table)
-dir <- "/storage/eICU/" #data_dir
-
-patient <- fread(paste0(dir, "/patient.csv"))
-pids <- patient$patientunitstayid
-hospital <- fread(paste0(dir, "/hospital.csv"))
-dictionary_path = "/storage/eICU/eICU_feature_extract/ApacheDX_dict.xlsx"
-function_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/"
-
-patient_labels <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, as_binary = T, labels_only = T, function_dir = function_dir)
-
-patient_features <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, as_binary = T, labels_only = F, function_dir = function_dir)
-
-code_folder_dir <- "/storage/eICU/eICU_feature_extract/"
-code_dir <- paste0(code_folder_dir, "/eICU_featurization")
-
-patient_features <- extract_patient(code_dir = code_dir, eicu_dir = "/storage/eICU/", patientunitstayid_list = pids, as_binary = T, labels_only = F)
+# 
+# #### Code example ####
+# library(data.table)
+# dir <- "/storage/eICU/" #data_dir
+# 
+# patient <- fread(paste0(dir, "/patient.csv"))
+# pids <- patient$patientunitstayid
+# hospital <- fread(paste0(dir, "/hospital.csv"))
+# dictionary_path = "/storage/eICU/eICU_feature_extract/ApacheDX_dict.xlsx"
+# function_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/"
+# 
+# patient_labels <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, as_binary = T, labels_only = T, function_dir = function_dir)
+# 
+# patient_features <- extract_patient(patientunitstayid_list = pids, patient_table = patient, hospital_table = hospital, apachedx_dictionary_path = dictionary_path, as_binary = T, labels_only = F, function_dir = function_dir)
+# 
+# code_folder_dir <- "/storage/eICU/eICU_feature_extract/"
+# code_dir <- paste0(code_folder_dir, "/eICU_featurization")
+# 
+# patient_features <- extract_patient(code_dir = code_dir, eicu_dir = "/storage/eICU/", patientunitstayid_list = pids, as_binary = T, labels_only = F)
 
 
 ####Function

@@ -4,35 +4,6 @@
 #v0.1 - 3/5/2021 - Edited to contain proper parameters and functionality. 
 #v0.2 - 3/11/2021 - wrapper that wraps in for loop for different start and stop times. 
 
-#example
-# patient <- fread("~/RO1_2020/ICP/propofol/ICP_meta_table.csv")
-# patient <- patient %>% dplyr::select(patientunitstayid, drug_offset)
-# colnames(patient)[2] <- "offset" #diagosis offset
-# 
-# #we want to only extract data from before the offset for each patient.
-# 
-# patient <- patient %>% group_by(patientunitstayid) %>% slice(which.min(offset))
-# 
-# pids <- patient$patientunitstayid
-# 
-# lab_df <- fread("/storage/eICU/lab.csv")
-# lab_df <- lab_df[which(lab_df$patientunitstayid %in% unique(pids)), ]
-# 
-# lab_final <- rbind()
-# for (i in 1:length(pids)) {
-#   print(paste0("--------------", i, "--------------"))
-# 
-#   tempid <- pids[i]
-#   temp_row <- patient[patient$patientunitstayid == tempid, ]
-#   upper_hr <- temp_row$offset / 60
-#   lower_hr <- upper_hr - 6
-# 
-#   temp_lab <- extract_lab(patientunitstayids = tempid, table_df = lab_df, lower_hr = lower_hr, upper_hr = upper_hr, per_pid = T, pre_stats = T, extras = T)
-# 
-#   lab_final <- rbind.fill(lab_final, temp_lab)
-# }
-
-
 ######
 #Dataframe format for patientunitstayid_dataframe:
 
@@ -47,15 +18,15 @@
 
 #Example taken from pids from test_data
 #
-code_dir <- "/storage/eICU/eICU_feature_extract/eICU_featurization/"
-data_dir <- paste0(code_dir, "/test_data/")
-
-patientunitstayid_dataframe <- fread(paste0(data_dir, "/test_feature_space.csv"))[,1]
-patientunitstayid_dataframe$start <- sample(seq(from = 0, to = 24, by = 0.01), size = nrow(patientunitstayid_dataframe), replace = T)
-patientunitstayid_dataframe$end <- patientunitstayid_dataframe$start + 24
-
-eicu_dir <- "/storage/eICU/"
-per_pid <- TRUE
+# code_dir <- "/storage/eICU/eICU_feature_extract/eICU_featurization/"
+# data_dir <- paste0(code_dir, "/test_data/")
+# 
+# patientunitstayid_dataframe <- fread(paste0(data_dir, "/test_feature_space.csv"))[,1]
+# patientunitstayid_dataframe$start <- sample(seq(from = 0, to = 24, by = 0.01), size = nrow(patientunitstayid_dataframe), replace = T)
+# patientunitstayid_dataframe$end <- patientunitstayid_dataframe$start + 24
+# 
+# eicu_dir <- "/storage/eICU/"
+# per_pid <- TRUE
 
 
 extract_lab <- function(code_dir, 
@@ -98,7 +69,7 @@ extract_lab <- function(code_dir,
   #create directory calls within it for lab.csv and/or lab.Rds 
   #error and messages included to inform user. 
   if (missing(lab_table)) {
-    message("lab_table not directly specified - assuming patient.csv exists in eicu_dir")
+    message("lab_table not directly specified - assuming lab.csv exists in eicu_dir")
     lab_table_rds <- paste0(eicu_dir, "/lab.Rds")
     lab_table_csv <- paste0(eicu_dir, "/lab.csv")
     
@@ -127,7 +98,7 @@ extract_lab <- function(code_dir,
          Or, per_pid = FALSE (the same start and stop offset per pid)")
   }
   
-  package_list <- c("tidyverse", "tidyverse", "data.table", "doParallel")
+  package_list <- c("tidyverse", "tidyverse", "data.table", "doParallel", "plyr")
   load_packages(package_list)
   
   
@@ -163,7 +134,7 @@ extract_lab <- function(code_dir,
   }
   
   
-  
+  return(lab_final)
   
 }
 
@@ -177,6 +148,9 @@ extract_lab_base_function <- function(patientunitstayids,
                                       extras) {
   
  #set proper directory then make sure all random forest trained files exist. 
+  
+  library(dplyr, warn.conflicts = FALSE)
+  options(dplyr.summarise.inform = FALSE)
   
   if (missing(lower_hr)) {
     lower_hr <- -Inf

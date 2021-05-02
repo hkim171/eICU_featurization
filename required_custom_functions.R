@@ -41,16 +41,29 @@ which_character <- function(df) {
 }
 
 #converts character vectors into one hot encoded columns and removes original column.
-create_binary <- function(df) {
+create_binary <- function(df, id_name) {
+  
+  if(missing(id_name)){
+    id_name = "patientunitstayid"
+  }
+  
   binaryvarnames <- which_character(df)
+  
+  if (id_name %in% binaryvarnames) {
+    
+    binaryvarnames <- binaryvarnames[-which(binaryvarnames %in% id_name)]
+    
+  }
+  
   df <- as.data.frame(df)
-  patient_binary <- df[, which(colnames(df) %in% c("patientunitstayid", binaryvarnames))]
+  # df <- df %>% select(-id_name)
+  patient_binary <- df[, which(colnames(df) %in% c(id_name, binaryvarnames))]
   
   dummies <- fastDummies::dummy_cols(patient_binary, select_columns = c(binaryvarnames), remove_selected_columns = T, ignore_na = T)
   # dummies[is.na(dummies)] <- 0
   
   df <- df %>% dplyr::select(-all_of(binaryvarnames))
-  df <- merge(df, dummies, by = "patientunitstayid")
+  df <- merge(df, dummies, by = id_name)
   
   return(df)
 }
