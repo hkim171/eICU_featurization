@@ -23,7 +23,7 @@ extract_PTS_aggregate <- function(init_stat_df, pids, identifier) {
   aggregate_stats <- rbind()
   #iterates through each pids within the init_df to gather aggregate statistics for each init statistics. 
   for (i in 1:nrow(pids)) {
-    # print(i)
+    print(i)
     pid <- pids$patientunitstayid[i]
     tempdf <- init_stat_df[which(init_stat_df$patientunitstayid == pid), ]
     tempdf <- tempdf[complete.cases(tempdf), ]

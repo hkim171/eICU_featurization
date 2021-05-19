@@ -18,13 +18,7 @@
 # init_stats : c("hour_bin", "patientunitstayid", "mean", "min", "max", "sd", "range", "delta", "data_count")
 # dataframe with X number of bin hours per patientunitstayid.
 
-extract_PTS_init_stats <- function(patientunitstayids, 
-                                   table_df, 
-                                   pts_name, 
-                                   lower_minute, 
-                                   upper_minute, 
-                                   binwidth, 
-                                   per_pid_boolean) {
+extract_PTS_init_stats <- function(patientunitstayids, table_df, pts_name, lower_minute, upper_minute, binwidth, ts_length_hour, per_pid_boolean) {
 
   
   if (missing(lower_minute)) {
@@ -39,12 +33,15 @@ extract_PTS_init_stats <- function(patientunitstayids,
     per_pid_boolean == FALSE
   }
   
+  if (missing(ts_length_hour)) {
+    ts_length_hour == ceiling(((upper_minute - lower_minute) * 60))
+  }
+  
   if (per_pid_boolean == TRUE) {
     patientunitstayids <- c(patientunitstayids)
   }
   
-  ts_length_hour = ceiling(((upper_minute - lower_minute) / 60))
-  # print(ts_length_hour)
+  
   
   # filter for pids and time frame
   table_df <- table_df[which(table_df$patientunitstayid %in% patientunitstayids), ] %>% droplevels(.) %>% distinct(.)
@@ -79,7 +76,7 @@ extract_PTS_init_stats <- function(patientunitstayids,
 
     tempdf <- tempdf$value
 
-    tempstats <- c((i), patientunitstayids, 
+    tempstats <- c((i * 2), patientunitstayids, 
                    mean(tempdf, na.rm = T), 
                    min(tempdf, na.rm = T), 
                    max(tempdf, na.rm = T), 
