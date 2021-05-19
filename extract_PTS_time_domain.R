@@ -18,6 +18,8 @@
 # 
 # eicu_dir:                  directory pointing to the raw eICU data tables- it expects all the csv datafiles to be present in the database. 
 #                            This includes hr.csv
+#                            Link to google drive folder with PTS csv files required. 
+#                            https://drive.google.com/drive/folders/1CfrT0MEcgNk0UFvvFlfBfYAhjvpsRM4d?usp=sharing
 #
 # lower_bound_hours:         (optional) if lower_bound is specified, the entire PTS dataset will be thresholded by that time in hours.
 #                            If not included, the data will be thresholded by the lower bound time column and upper bound time column included
