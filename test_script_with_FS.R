@@ -19,10 +19,10 @@ code_dir <- paste0(code_folder_dir, "/eICU_featurization")
 #Build ML prototype example code using example CSV files
 
 #parameters:
-feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space_4VIF.csv"
+feature_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_feature_space.csv"
 label_dir = "/storage/eICU/eICU_feature_extract/eICU_featurization/test_data/test_label.csv"
 outcomes =  c("Expired", "Alive")
-experiment_name = "test_4_7_21"
+experiment_name = "FS_test_5_23_21"
 merge_identifier = "patientunitstayid"
 num_outer_loop = 2
 
@@ -45,12 +45,15 @@ forward_selection(code_dir  = code_dir ,
 )
 
 #train model with the new FS feature space. 
+
+fs_feature_dir = paste0(save_dir, "/", experiment_name, "_FS_results/", "FS_feature_space.csv")
+
 build_prototype(code_dir = code_dir,
                 save_dir = code_folder_dir,
                 num_outer_loop = num_outer_loop,
                 cross_validation_k = 3,
                 merge_identifier = merge_identifier,
-                feature_dir = paste0(code_dir, "/test_data/test_feature_space.csv"),
+                feature_dir = fs_feature_dir,
                 label_dir = paste0(code_dir, "/test_data/test_label.csv"),
                 outcomes = outcomes,
                 experiment_name = experiment_name,
@@ -59,13 +62,13 @@ build_prototype(code_dir = code_dir,
 
 # build_prototype(code_dir = code_dir, 
 #                 save_dir = code_folder_dir,
-#                 num_outer_loop = 5,
-#                 cross_validation_k = 5,
-#                 merge_identifier = "patientunitstayid",
-#                 feature_dir = paste0(code_dir, "/test_data/test_feature_space.csv"),
+#                 num_outer_loop = num_outer_loop,
+#                 cross_validation_k = 3,
+#                 merge_identifier = merge_identifier,
+#                 feature_dir = fs_feature_dir,
 #                 label_dir = paste0(code_dir, "/test_data/test_label.csv"),
-#                 outcomes = c("Expired", "Alive"),
-#                 experiment_name = "test",
+#                 outcomes = outcomes,
+#                 experiment_name = experiment_name,
 #                 Already_trained = TRUE
 # )
 

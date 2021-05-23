@@ -1,4 +1,4 @@
-### MARCC TEST CODE
+### TEST CODE
 
 #LOCAL DIR - for local machine
 code_folder_dir <- "/storage/eICU/eICU_feature_extract/"
@@ -9,12 +9,12 @@ code_dir <- paste0(code_folder_dir, "/eICU_featurization")
 # code_dir <- paste0(code_folder_dir, "/eICU_featurization")
 
 #SAFE DIR - for safe desktop crunchr env 
-code_folder_dir <- "~/workspace/Temporary/hkim171/scratch/"
-code_dir <- paste0(code_folder_dir, "/eICU_featurization")
+# code_folder_dir <- "~/workspace/Temporary/hkim171/scratch/"
+# code_dir <- paste0(code_folder_dir, "/eICU_featurization")
 
 #SAFE only items - uncomment if using SAFE desktop crunchr environment
-install.packages("Cairo")
-options(bitmapType='cairo')
+# install.packages("Cairo")
+# options(bitmapType='cairo')
 
 #Build ML prototype example code using example CSV files
 
