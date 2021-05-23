@@ -22,7 +22,7 @@ MARCC_test_script.R contains some of the test cases I've run. Check it out. This
   <li>extract_GCS - coming soon</li>
   <li>extract_GCS_timeseries - coming soon</li>
   <li>extract_medication - coming soon</li>
-  <li>extract_PTS_time_domain - coming soon</li>
+  <li>extract_PTS_time_domain - extracts time domain PTS features from PTS data. updated 5-19-2021</li>
   <li>extract_PTS_FFT_wavelet - coming soon</li>
   <li>extract_PTS_information_theory - coming soon</li>
   <li>extract_respiratory - coming soon</li>
