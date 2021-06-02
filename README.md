@@ -35,5 +35,6 @@ MARCC_test_script.R contains some of the test cases I've run. Check it out. This
   <li>model_guide.R - contains automated supervised machine learning prototyping code - can be run with build_prototype - V0.2</li>
   <li>Performance_metric_plotting.R - contains CSV summary of model performance and plots of each performance metric </li>
   <li>required_custom_functions.R contains snippets of useful functions and is loaded into functions automatically upon code execution </li>
-  <li>feature_ranking.R Contains feature ranking of build_prototype created RData trained models - generates both CSV rankings and plots for each of the 3 algorithms integrated into build_prototype as of March 2020 </li>
+  <li>feature_ranking.R Contains feature ranking of build_prototype created RData trained models - generates both CSV rankings and plots for each of the 3 algorithms integrated into build_prototype as of March 2021 </li>
+   <li>forward_selection.R Contains code to run forward selection on features to select the most optimal combination of features to use for model training. Refer to test_script_with_FS.R or forward_selection.R for example code - MAY 2021</li>
 </ol>
