@@ -190,7 +190,8 @@ extract_PTS_time_domain <- function(code_dir,
     
     print(paste0(type, ": Time-domain - initial statistic extraction"))
     for (i in 1:length(pids)) {
-      pid <- patientunitstayid_time[i]
+      print(paste0(type, "(", which(types %in% type), "/", length(types), ") -- init -- ", i, "/", length(pids)))
+      pid <- patientunitstayid_time[i, ]
       pts_temp <- extract_PTS_init_stats(patientunitstayids = pid$patientunitstayid, table_df = PTS_table, pts_name = type, lower_minute = (pid$lower * 60), upper_minute = (pid$upper * 60), binwidth = binwidth, per_pid_boolean = T)
       pts_init <- rbind(pts_init, pts_temp)
       
@@ -200,7 +201,7 @@ extract_PTS_time_domain <- function(code_dir,
     
     #remove those that have < 2 rows of data to analyze. 
     pts_temp <- pts_init[complete.cases(pts_init), ]
-    pts_temp <- pts_temp %>% group_by(patientunitstayid) %>% summarise(count = n())
+    pts_temp <- pts_temp %>% group_by(patientunitstayid) %>% dplyr::summarise(count = n())
     pts_temp <- pts_temp[which(pts_temp$count >= 2), ]
     hr_pid_2 <- pts_temp$patientunitstayid
     pts_init <- merge(pts_init, pts_temp, by = "patientunitstayid", all = T)
