@@ -138,9 +138,9 @@ forward_selection <- function(code_dir,
   dir.create(save_dir)
 
 
-  df = fread(feature_dir)
+  df = read.csv(feature_dir)
   df_original = as.data.frame(df)
-  label = fread(label_dir)
+  label = read.csv(label_dir)
   
   #remove unwanted features and standardize data
   df <- df[complete.cases(df), ]
