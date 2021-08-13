@@ -208,8 +208,10 @@ random_forest_rank <- function(experiment_folder_dir, code_dir, experiment_name,
       print(paste0("outer loop ", i, ": training and ranking using Random Forest SRC"))
       
       dat <- read.csv(paste0("training_", i, ".csv"))
+      View(str(dat))
+      # View(dat)
       
-      rf= rfsrc(label~.,   data = dat, 
+      rf= rfsrc(label~.,   data = dplyr::tbl_df(dat), 
                 ntree = 5000, splitrule = 'gini',
                 na.action = "na.omit")
       print(rf)
@@ -532,6 +534,8 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
 #
 #how_many_top_features:     Number of top ranked features to visualize. This is important to easily view the plot texts. 
 #
+#new_names:                 Specified feature names, with first column named 'oldNames' and second column named 'newNames' as CSV file
+#
 
 # #example function calls
 # experiment_folder_dir <- "/storage/eICU/eICU_feature_extract/"
@@ -544,8 +548,13 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
 #                    num_outer_loop = 5,
 #                    how_many_top_features = 50)
 
+new_feature_names <- function(newNames) {
+  synonyms <- read.csv(newNames)
+  synonyms <- hash(keys=synonyms$oldNames, values=synonyms$newNames)
+  return(synonyms)
+}
 
-GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_loop, how_many_top_features) {
+GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_loop, how_many_top_features, new_names) {
   
   #check of required source scripts in directory
   if (dir.exists(code_dir)) {
@@ -602,6 +611,13 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
   #ranking result. 
   #varimp version
   
+  synonyms <- hash()
+  if (!missing(new_names)) {
+    print(paste(experiment_folder_dir, experiment_name, new_names, sep=""))
+    synonyms <- new_feature_names(paste(experiment_folder_dir, experiment_name, new_names, sep=""))
+  }
+  
+  
   for (i in 1:num_outer_loop) {
     setwd(glm_object_dir)
     glm_obj_name <- paste0(experiment_name, "_modelGLM_iter_", i, ".Rdata")
@@ -647,6 +663,14 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
     names <- as.data.frame(as.character(A@Dimnames[[1]]))
     colnames(names) <- "features"
     names$features <- as.character(names$features)
+    if (length(keys(synonyms)) != 0) {
+      for (j in 1:length(names$features)) {
+        if (has.key(names$features[j], synonyms)) {
+          names$features[j] <- synonyms[[names$features[j]]]
+        }
+      }
+    }
+    
     
     names$coefficient <- NA
     names$coefficient[A@i + 1] <- A@x
@@ -841,6 +865,4 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
   dev.off()
   
 }
-
-
 
