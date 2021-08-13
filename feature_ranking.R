@@ -554,7 +554,7 @@ new_feature_names <- function(newNames) {
   return(synonyms)
 }
 
-GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_loop, how_many_top_features, new_names) {
+GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_loop, how_many_top_features, new_names, class1Name, class0Name) {
   
   #check of required source scripts in directory
   if (dir.exists(code_dir)) {
@@ -830,8 +830,11 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
   temp_glm_ranks_long_neg$features <- as.factor(temp_glm_ranks_long_neg$features)
   temp_glm_ranks_long_neg$features <- fct_rev(factor(temp_glm_ranks_long_neg$features, levels(top_neg_ordering)))
   
+  if (missing(class1Name)) {
+    class1Name <- "(+) beta coeffs"
+  }
   p <- ggplot(temp_glm_ranks_long_pos, aes(x = features, y = coefficient, fill = factor(features))) + geom_boxplot() + coord_flip() + theme(legend.position = "none") +
-    ggtitle(paste0("top ", pos_count, " (+) beta coeffs")) +
+    ggtitle(paste0("top ", pos_count, " predicting ", class1Name)) +
     theme(
       plot.title = element_text(size = 17),
       axis.text.y = element_text(size = 12),
@@ -839,11 +842,14 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
     ) +
     ylim(0, limit) + 
     xlab("feature name") +
-    ylab("normalized mean coefficient") +
+    ylab("normalized mean coeff") +
     scale_x_discrete(position = "top")
   
+  if (missing(class0Name)) {
+    class0Name <- "(-) beta coeffs"
+  }
   q <- ggplot(temp_glm_ranks_long_neg, aes(x = features, y = coefficient, fill = factor(features))) + geom_boxplot() + coord_flip() + theme(legend.position = "none") +
-    ggtitle(paste0("top ", neg_count, " (-) beta coeffs")) +
+    ggtitle(paste0("top ", neg_count, " predicting ", class0Name)) +
     theme(
       plot.title = element_text(size = 17),
       axis.text.y = element_text(size = 12),
@@ -851,7 +857,7 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
     ) +
     ylim(-1 * limit ,0) + 
     xlab("feature name") +
-    ylab("normalized mean coefficient")
+    ylab("normalized mean coeff")
   
   setwd(save_dir)
   png(paste0("top_", how_many_top_features,"_features_GLM_beta_coeff_ranked_box_plot.png"), units = "in", width = 10, height = 10, res = 300)
@@ -859,7 +865,7 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
                           top = grid::textGrob(paste0(experiment_name, ": top ",how_many_top_features," trained glm beta coefficients\nBoxplot over ", num_outer_loop," outer fold iterations"),
                                                gp = grid::gpar(fontsize = 20)),
                           
-                          bottom = grid::textGrob("Positive coefficients increase the probability of class 1 outcome.",
+                          bottom = grid::textGrob(paste0("Positive coefficients increase the probability of ", class1Name," outcome."),
                                                   gp = grid::gpar(fontface = 3, fontsize = 14)
                           ))
   dev.off()
