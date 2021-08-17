@@ -551,6 +551,7 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
 new_feature_names <- function(newNames) {
   synonyms <- read.csv(newNames)
   synonyms <- hash(keys=synonyms$oldNames, values=synonyms$newNames)
+  print(synonyms)
   return(synonyms)
 }
 
@@ -613,8 +614,8 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
   
   synonyms <- hash()
   if (!missing(new_names)) {
-    print(paste(experiment_folder_dir, experiment_name, new_names, sep=""))
-    synonyms <- new_feature_names(paste(experiment_folder_dir, experiment_name, new_names, sep=""))
+    print(paste0(experiment_folder_dir, "/", experiment_name, new_names))
+    synonyms <- new_feature_names(paste0(experiment_folder_dir, "/", experiment_name, new_names))
   }
   
   
