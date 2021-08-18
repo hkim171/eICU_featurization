@@ -25,6 +25,12 @@
 #V0.1 - 3/3/2021 - XGboost completed.
 #V0.2 - 3/10/2021 -GLM rankings compelted. 
 
+new_feature_names <- function(newNames) {
+  synonyms <- read.csv(newNames)
+  synonyms <- hash(keys=synonyms$oldNames, values=synonyms$newNames)
+  print(synonyms)
+  return(synonyms)
+}
 
 ########################################## RANDOM FOREST FEATURE RANKINGS #######################################################
 #### Output
@@ -311,7 +317,7 @@ random_forest_rank <- function(experiment_folder_dir, code_dir, experiment_name,
 
 #will always use trained RF - shap = T, shap = F will be used to integrate shapley feature explanations. 
 
-XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_loop, how_many_top_features, shap) {
+XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_loop, how_many_top_features, shap, new_names) {
   
   #check of required source scripts in directory
   if (dir.exists(code_dir)) {
@@ -331,6 +337,12 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
     } else {
       source("Performance_metric_plotting.R")
     }
+  }
+  
+  synonyms <- hash()
+  if (!missing(new_names)) {
+    print(paste0(experiment_folder_dir, "/", experiment_name, new_names))
+    synonyms <- new_feature_names(paste0(experiment_folder_dir, "/", experiment_name, new_names))
   }
   
   #set proper directory then make sure all XG trained files exist. 
@@ -382,6 +394,14 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
       
     }
     
+    if (length(keys(synonyms)) != 0) {
+      for (j in 1:length(temp_xg_ranks$rowname)) {
+        if (has.key(temp_xg_ranks$rowname[j], synonyms)) {
+          temp_xg_ranks$rowname[j] <- synonyms[[temp_xg_ranks$rowname[j]]]
+        }
+      }
+    }
+    
     if(how_many_top_features > nrow(temp_xg_ranks)) {
       how_many_top_features <- nrow(temp_xg_ranks)
     }
@@ -421,6 +441,16 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
       shap_values <- shap.values(xgb_model = final_model, X_train = as.matrix(train[,-1]))
       tempimp <- as.data.frame(shap_values$mean_shap_score)
       tempimp <- rownames_to_column(tempimp)
+      
+      
+      
+      if (length(keys(synonyms)) != 0) {
+        for (j in 1:length(tempimp$rowname)) {
+          if (has.key(tempimp$rowname[j], synonyms)) {
+            tempimp$rowname[j] <- synonyms[[tempimp$rowname[j]]]
+          }
+        }
+      }
       
       
       if (i == 1) {
@@ -547,13 +577,6 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
 #                    experiment_name = "test",
 #                    num_outer_loop = 5,
 #                    how_many_top_features = 50)
-
-new_feature_names <- function(newNames) {
-  synonyms <- read.csv(newNames)
-  synonyms <- hash(keys=synonyms$oldNames, values=synonyms$newNames)
-  print(synonyms)
-  return(synonyms)
-}
 
 GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_loop, how_many_top_features, new_names, class1Name, class0Name) {
   
