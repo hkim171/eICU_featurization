@@ -107,6 +107,10 @@ random_forest_rank <- function(experiment_folder_dir, code_dir, experiment_name,
   if (missing(use_trained_rf)) {
     use_trained_rf <- FALSE
   }
+
+  if (num_outer_loop < 2) {
+    stop("Number of outer loops needs to be at least 2.")
+  }
   
   if (use_trained_rf) {
     rf_object_dir <- paste0(experiment_folder_dir, "/", experiment_name, "/")
@@ -331,6 +335,10 @@ XG_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer_
     }
   }
   
+  if (num_outer_loop < 2) {
+    stop("Number of outer loops needs to be at least 2.")
+  }
+    
   #set proper directory then make sure all XG trained files exist. 
   xg_object_dir <- paste0(experiment_folder_dir, "/", experiment_name, "/")
   if (dir.exists(xg_object_dir)) {
@@ -567,6 +575,10 @@ GLM_rank <- function(experiment_folder_dir, code_dir, experiment_name, num_outer
     }
   }
   
+  if (num_outer_loop < 2) {
+    stop("Number of outer loops needs to be at least 2.")
+  }
+    
   #set proper directory then make sure all random forest trained files exist. 
   use_trained_glm <- T
   if (use_trained_glm) {
